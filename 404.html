@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F6F4F0">
+<meta name="robots" content="noindex">
+<title>Página não encontrada — Aatlas Replay</title>
+<!-- esta página aparece em qualquer endereço quebrado (ex.: /replay/a/b): a base aponta os arquivos para a pasta do site. Mude junto com o ErrorDocument do .htaccess. -->
+<base href="/replay/">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap">
+<link rel="stylesheet" href="paginas.css">
+<style>
+.doc.nf{display:grid;grid-template-columns:minmax(0,1fr);gap:8px 32px;align-items:center}
+.nf img{width:min(180px,45vw);height:auto;justify-self:center}
+.nf .acts{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
+.nf .btn{color:#fff}
+.nf .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+@media (min-width:720px){.doc.nf{grid-template-columns:minmax(0,1fr) auto}.nf img{grid-column:2;grid-row:1/span 2}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <nav class="nav" aria-label="Principal">
+      <a class="brand" href="./"><img src="assets/logo.png" alt="" height="36">Aatlas <span>Replay</span></a>
+      <a class="btn" href="./">Voltar ao site</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <article class="doc nf">
+    <div>
+      <span class="mono">Erro 404</span>
+      <h1>Essa página saiu da quadra.</h1>
+      <p>O endereço pode estar errado ou a página mudou de lugar. Volte para o começo ou fale com a gente.</p>
+      <div class="acts"><a class="btn" href="./">Ir para o início</a><a class="btn ghost" href="https://wa.me/5541998145475" target="_blank" rel="noopener">Falar no WhatsApp</a></div>
+    </div>
+    <img src="assets/p-problema.webp" alt="Jogador coçando a cabeça olhando o celular" width="180" height="320">
+  </article>
+</main>
+</body>
+</html>

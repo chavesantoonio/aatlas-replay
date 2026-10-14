@@ -17,6 +17,7 @@ Domínio oficial: https://www.aatlascompany.com.br/replay/ (Hostinger). Cópia d
 Copy-Item *.html,paginas.css,vercel.json,.htaccess,favicon.png dist -Force; Copy-Item assets dist -Recurse -Force
 ```
 
+- `404.html`: página de endereço inexistente. Usa `<base href="/replay/">` e o `.htaccess` aponta `ErrorDocument 404 /replay/404.html`; se a pasta mudar, mude os dois.
 - Hostinger: envie o conteúdo da `dist` (menos a pasta `.vercel`) para `public_html/replay/`. O `.htaccess` faz o papel do `vercel.json`.
 - Vercel: `npx vercel deploy dist --prod`.
 

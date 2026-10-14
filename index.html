@@ -843,7 +843,8 @@ if (WHATSAPP) document.querySelectorAll(".cta-link").forEach(a => a.href = "http
 document.getElementById("indique-form").addEventListener("submit", e => {
   e.preventDefault();
   const d = new FormData(e.target), v = k => (d.get(k) || "").trim();
-  const txt = ["Oi! Quero indicar uma arena para o Aatlas Replay.", "Meu nome: " + v("nome"), "Arena: " + v("arena"), "Cidade: " + v("cidade"), v("dono") && "WhatsApp do dono: " + v("dono")].filter(Boolean).join("\n");
+  const txt = "Olá, me chamo " + v("nome") + ", treino na arena " + v("arena") + " em " + v("cidade") + " e gostaria de indicá-la para o Aatlas Replay. "
+    + (v("dono") ? "Tenho o WhatsApp do dono: " + v("dono") + "." : "Não tenho o WhatsApp do dono.");
   window.open(WHATSAPP ? "https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(txt) : "https://ig.me/m/aatlascompany", "_blank", "noopener");
 });
 
@@ -867,7 +868,8 @@ document.getElementById("hero-watch").addEventListener("click", e => {
   startVideo(true);
 });
 
-/* cada seção tem seu endereço (/planos, /duvidas…): o vercel.json e o .htaccess entregam o index.html nesses caminhos.
+/* cada seção tem seu endereço (/planos, /duvidas…): o vercel.json e o .htaccess entregam o index.html nesses caminhos
+   (seção nova = incluir o id na lista dos dois; endereço fora da lista cai no 404.html).
    Funciona na raiz ou numa pasta (ex.: /replay/planos). Abrindo o arquivo direto (file://), os links seguem como #âncora. */
 if (location.protocol !== "file:") (function(){
   const base = location.pathname.replace(/[^/]*$/, "");

@@ -1,7 +1,7 @@
 {
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/([a-z-]+)", "destination": "/" }
+    { "source": "/(video|problema|sua-marca|como-funciona|para-a-arena|painel|entrega|planos|evolucao|privacidade|implantacao|duvidas|indique)", "destination": "/" }
   ],
   "headers": [
     {

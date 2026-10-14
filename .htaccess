@@ -1,15 +1,15 @@
 # Apache (Hostinger): mesmas regras do vercel.json. Funciona na raiz ou numa pasta (ex.: /replay).
 DirectoryIndex index.html
 Options -Indexes
+# endereço que não existe -> página 404 (caminho a partir da raiz do domínio; mude se a pasta mudar)
+ErrorDocument 404 /replay/404.html
 
 RewriteEngine On
 # /politica-de-privacidade -> politica-de-privacidade.html
 RewriteCond %{REQUEST_FILENAME}.html -f
 RewriteRule ^([a-z-]+)$ $1.html [L]
-# /planos, /duvidas... -> index.html (o JS rola até a seção)
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^([a-z-]+)$ index.html [L]
+# /planos, /duvidas... -> index.html (o JS rola até a seção). Só os ids das seções; o resto cai no 404.
+RewriteRule ^(video|problema|sua-marca|como-funciona|para-a-arena|painel|entrega|planos|evolucao|privacidade|implantacao|duvidas|indique)$ index.html [L]
 
 <IfModule mod_headers.c>
   Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'"
