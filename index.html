@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F6F4F0">
+<title>Aatlas Replay — replay automático para arenas e quadras</title>
+<link rel="canonical" href="https://aatlas-replay-quadras.vercel.app/">
+<link rel="icon" type="image/png" href="favicon.png">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:url" content="https://aatlas-replay-quadras.vercel.app/">
+<meta property="og:title" content="Aatlas Replay — replay automático para arenas e quadras">
+<meta property="og:description" content="O jogador aperta o botão na quadra e em cerca de 10 segundos o lance está no site da arena, com a sua marca no vídeo.">
+<meta property="og:image" content="https://aatlas-replay-quadras.vercel.app/assets/poster.jpg">
+<meta property="og:image:width" content="1920">
+<meta property="og:image:height" content="1080">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Replay automático para arenas: o jogador aperta o botão na coluna da quadra e em cerca de 10 segundos o lance está no site da arena, com a sua marca no vídeo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+/* Layout: página clara e acolhedora para donos de arena — personagens desenhados à mão e ilustrações de produto (quadra, câmera, coluna, celular) contam cada etapa;
+   cards arredondados em formações diferentes (hero com ilustrações laterais, assimétrico, ilustração + passos,
+   7/5 + 3, lateral fixa, trilho em escada). Tema único claro, escolhido para um público pouco digital. */
+:root{
+  --bg:#F6F4F0; --surface:#FFFFFF; --surface-2:#FAF8F5; --ink:#17191E; --muted:#555961; --faint:#6B6E77;
+  --line:rgba(23,25,30,.09); --grid:rgba(23,25,30,.055);
+  --accent:#E85002; --accent-2:#C94400; --accent-soft:#FCEBDF; --accent-3:#A83800;
+  --shadow:0 1px 2px rgba(23,25,30,.05),0 20px 40px -24px rgba(23,25,30,.26);
+  --shadow-lg:0 2px 6px rgba(23,25,30,.05),0 44px 80px -44px rgba(23,25,30,.38);
+  --f-sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --f-serif:"Instrument Serif",Cambria,Georgia,serif;
+  --f-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r-xl:32px; --r-lg:24px; --r-md:18px;
+  --wrap:1200px;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+/* a página só rola para cima e para baixo: nada pode alargar a tela no celular */
+html,body{overflow-x:hidden;overflow-x:clip}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-sans);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:clip}
+img,video,svg{display:block;max-width:100%}
+a{color:inherit}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:10px}
+.wrap{max-width:var(--wrap);margin:0 auto;padding-inline:20px}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.025em;text-wrap:balance}
+p{margin:0;text-wrap:pretty}
+.mono{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.it{font-family:var(--f-serif);font-style:italic;font-weight:400;letter-spacing:-.01em;color:var(--accent)}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;color:var(--accent-3)}
+.eyebrow::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--accent)}
+.h2{font-size:clamp(30px,5vw,50px);line-height:1.05}
+.lead{font-size:clamp(17px,1.6vw,19px);color:var(--muted);max-width:54ch}
+.sec{padding-block:clamp(64px,9vw,112px)}
+.sec-head{display:grid;gap:16px;margin-bottom:clamp(32px,5vw,52px)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:clamp(22px,2.6vw,32px);min-width:0}
+.card h3{font-size:clamp(19px,1.8vw,22px);line-height:1.22;margin-bottom:8px}
+.card p{color:var(--muted);font-size:16px}
+.ico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--ink);color:#fff;margin-bottom:16px;flex:none}
+.ico svg{width:22px;height:22px}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-family:var(--f-mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none}
+/* cada .art traz o personagem e, ao lado/abaixo, a ilustração de produto */
+.art{display:grid;gap:10px}
+.art svg,.art img{width:100%;height:auto}
+/* personagens em imagem: altura limitada para não esticar o hero nem o card do problema */
+.hero-art .art img,.prob .big .art img{max-height:300px;object-fit:contain;object-position:bottom}
+/* carrossel de cenas (como funciona): rola sozinho a cada 2 s e pode ser arrastado */
+.reel{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;cursor:grab}
+.reel::-webkit-scrollbar{display:none}
+.reel img{flex:0 0 100%;aspect-ratio:1000/726;object-fit:contain;scroll-snap-align:center;user-select:none;-webkit-user-drag:none}
+.art .reel img:hover{transform:none}
+.reel.drag{cursor:grabbing;scroll-snap-type:none}
+/* ilustrações paradas; no desktop, zoom ao passar o mouse */
+.art svg,.art img,.trio .wide > svg,.price-head svg{transition:transform .3s ease}
+@media (hover:hover){.art svg:hover,.art img:hover,.trio .wide > svg:hover,.price-head svg:hover{transform:scale(1.07)}}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:54px;padding:0 26px;border-radius:999px;border:1.5px solid transparent;font-weight:600;font-size:16px;text-decoration:none;transition:transform .2s ease,background .2s ease,border-color .2s ease,box-shadow .2s ease}
+.btn:hover{transform:translateY(-1px)}
+.btn-primary{background:var(--accent-2);color:#fff;box-shadow:0 10px 24px -12px rgba(201,68,0,.7)}
+.btn-primary:hover{background:var(--accent-3)}
+.btn-line{border-color:var(--ink);color:var(--ink);background:var(--surface)}
+.btn-line:hover{background:var(--ink);color:#fff}
+.btn svg{width:18px;height:18px}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;padding-block:12px}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:8px 8px 8px 18px;border-radius:999px;background:rgba(255,255,255,.82);border:1px solid var(--line);box-shadow:var(--shadow);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%)}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
+.brand img{height:36px;width:auto;display:block}
+.brand span{color:var(--faint);font-weight:500;display:none}
+@media (min-width:380px){.brand span{display:inline}}
+.nav ul{display:none;list-style:none;margin:0;padding:0;gap:26px;font-size:15px}
+.nav ul a{text-decoration:none;color:var(--muted);transition:color .2s}
+.nav ul a:hover{color:var(--ink)}
+.nav .btn{min-height:44px;padding:0 18px;font-size:14.5px;white-space:nowrap}
+
+/* hero */
+.hero{position:relative;isolation:isolate;padding-top:clamp(24px,4vw,48px)}
+.hero::before{content:"";position:absolute;inset:-80px 0 0;z-index:-1;background-image:radial-gradient(var(--grid) 1.4px,transparent 1.4px);background-size:26px 26px;mask-image:linear-gradient(#000 40%,transparent 92%);-webkit-mask-image:linear-gradient(#000 40%,transparent 92%)}
+.hero-grid{display:grid;gap:8px;align-items:end}
+.hero-copy{display:grid;justify-items:center;text-align:center;gap:20px}
+.pill{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);box-shadow:var(--shadow)}
+.pill b{color:var(--ink);font-weight:600}
+.hero h1{font-size:clamp(40px,7vw,84px);line-height:1;max-width:14ch}
+.hero h1 .it{display:block;margin-top:.04em}
+.hero .lead{text-align:center;max-width:46ch}
+.hero-ctas{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:4px}
+.hero-art{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:520px;margin:0 auto;width:100%}
+.hero-art .art{max-width:240px;justify-self:center}
+/* celular primeiro: no hero os dois personagens ficam lado a lado, na mesma altura, e cada ilustração de produto
+   (quadra e celular) vira um selo fixo no canto superior direito do seu personagem, meio para fora da imagem.
+   É posição fixa, sem animação. De 720px para cima as ilustrações voltam ao tamanho cheio, embaixo dos personagens. */
+.hero-art{margin-top:40px}
+.hero-art .art{position:relative}
+.hero-art .art svg{position:absolute;top:-36px;right:-12px;width:clamp(72px,22vw,96px);transition:none}
+.hero-art .art svg:hover{transform:none}
+.hero-art .art img{height:clamp(150px,46vw,230px)}
+
+/* vídeo */
+.watch{display:grid;justify-items:center;gap:14px;margin-top:clamp(36px,5vw,56px)}
+.watch-cta{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;text-align:center}
+.watch-cta .tag{display:inline-flex;align-items:center;gap:10px;padding:10px 18px;border-radius:999px;background:var(--ink);color:#fff;font-weight:600;font-size:15.5px}
+.watch-cta .tag svg{width:16px;height:16px}
+.watch-cta .hint{font-family:var(--f-serif);font-style:italic;font-size:clamp(20px,2.4vw,26px);color:var(--muted)}
+.doodle{width:44px;height:auto;color:var(--accent);margin-top:-4px}
+.monitor{position:relative;width:100%;max-width:1060px;border-radius:var(--r-xl);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-lg);padding:10px}
+.screen{position:relative;border-radius:22px;overflow:hidden;aspect-ratio:16/9;background:var(--bg);max-width:100%}
+.screen video{width:100%;height:100%;object-fit:cover}
+.play{position:absolute;inset:0;display:grid;place-items:center;border:0;background:linear-gradient(180deg,rgba(23,25,30,0) 40%,rgba(23,25,30,.28));padding:0}
+.play-inner{display:inline-flex;align-items:center;gap:16px;padding:12px 26px 12px 12px;border-radius:999px;background:var(--surface);box-shadow:0 24px 50px -20px rgba(23,25,30,.6);transition:transform .25s ease}
+.play[hidden]{display:none}
+.play:hover .play-inner{transform:scale(1.04)}
+.play-btn{width:64px;height:64px;border-radius:50%;background:var(--accent);display:grid;place-items:center;color:#fff;flex:none}
+.play-btn svg{width:26px;height:26px;margin-left:3px}
+.play-txt{display:grid;text-align:left;line-height:1.25}
+.play-txt b{font-size:18px}
+.play-txt span{font-size:14px;color:var(--muted)}
+.fs{position:absolute;top:12px;right:12px;z-index:2;width:44px;height:44px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;background:rgba(23,25,30,.72);color:#fff;transition:background .2s ease}
+.fs:hover{background:var(--ink)}
+.fs svg{width:20px;height:20px}
+.screen video:fullscreen{object-fit:contain}
+.tele{display:grid;grid-template-columns:1fr;gap:10px;width:100%;max-width:1060px;margin-top:4px}
+.tele div{border-radius:var(--r-md);border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow);padding:14px 16px;display:grid;grid-template-columns:96px 1fr;align-items:center;gap:12px;min-width:0}
+.tele b{font-size:clamp(24px,3vw,32px);font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.tele b small{font-size:.5em;color:var(--accent-3);margin-left:3px}
+.tele span{color:var(--muted);font-size:14px;line-height:1.35}
+
+/* esportes */
+.sports{border-block:1px solid var(--line);background:var(--surface);overflow:hidden;margin-top:clamp(56px,8vw,88px)}
+.sports .track{display:flex;width:max-content;min-width:200%;animation:roll 42s linear infinite}
+.sports .set{display:flex;flex:1 0 auto;justify-content:space-around}
+.sports span{display:inline-flex;flex-direction:column;align-items:center;gap:10px;padding:22px 34px;font-size:15.6px;font-weight:500;color:var(--muted);white-space:nowrap}
+.sports svg{width:clamp(48px,5.5vw,64px);height:auto;color:var(--accent)}
+@keyframes roll{to{transform:translateX(-50%)}}
+
+/* problema */
+.prob{display:grid;gap:16px}
+.prob .big{display:grid;gap:20px;align-content:space-between;overflow:hidden}
+.prob .big h2{font-size:clamp(28px,3.8vw,42px);line-height:1.08;max-width:16ch}
+.prob .big .art{grid-template-columns:1fr 1fr;align-items:end;max-width:540px;justify-self:end;margin:-8px -6px -26px 0}
+.prob .small{display:flex;gap:16px;align-items:flex-start}
+.prob .small .ico{margin:0}
+/* cards de destaque: laranja sólido com letra branca (o mesmo padrão vale para o passo ativo, o total em 12 meses e o plano em destaque) */
+.prob .tinted{background:var(--accent-2);border-color:var(--accent-2);color:#fff}
+.prob .tinted p{color:#fff}
+.prob .tinted .ico{background:#fff;color:var(--accent-2)}
+/* sua marca: mesma formação do problema, espelhada no desktop, com uma ilustração só */
+.prob .big .art.one{grid-template-columns:1fr;margin:0 0 -8px;justify-self:center}
+
+/* como funciona */
+.how{display:grid;gap:20px;align-items:start}
+.scene{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xl);box-shadow:var(--shadow-lg);padding:clamp(18px,3vw,32px);position:relative;overflow:hidden}
+.scene::before{content:"";position:absolute;inset:0;background-image:radial-gradient(var(--grid) 1.3px,transparent 1.3px);background-size:22px 22px;pointer-events:none}
+.scene .art{position:relative}
+.scene .tagline{position:relative;display:inline-flex;align-items:center;gap:8px;margin-top:10px;padding:8px 14px;border-radius:999px;background:var(--accent-soft);color:var(--accent-3);font-weight:600;font-size:14.5px}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.step{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;padding:18px 20px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
+.step .n{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--ink);border:1px solid var(--ink);color:#fff}
+.step .n svg{width:26px;height:26px}
+.step .n svg *{stroke-width:2.75}
+.step h3{font-size:18.5px;margin-bottom:2px;line-height:1.25}
+.step p{color:var(--muted);font-size:16px}
+.step.on{border-color:var(--accent-2);background:var(--accent-2);color:#fff}
+.step.on p{color:#fff}
+.step.on .n{background:#fff;color:var(--accent-2);border-color:#fff}
+
+/* para a arena */
+.arena{display:grid;gap:16px}
+.calc{display:grid;gap:22px;align-content:space-between}
+.calc .head{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}
+.calc .head .art{grid-template-columns:1fr 1fr;align-items:end;width:clamp(220px,28vw,320px);margin:-18px -8px -18px 0}
+.fields{display:grid;gap:18px}
+.field label{display:flex;justify-content:space-between;gap:12px;font-size:15.5px;font-weight:500;margin-bottom:10px}
+.field label output{font-family:var(--f-mono);font-size:14px;color:var(--accent-3);font-variant-numeric:tabular-nums}
+.field input[type=range]{width:100%;accent-color:var(--accent);height:26px}
+.result{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.result div{border-radius:var(--r-md);background:var(--surface-2);border:1px solid var(--line);padding:16px}
+.result b{display:block;font-size:clamp(26px,3.6vw,38px);font-weight:600;letter-spacing:-.035em;font-variant-numeric:tabular-nums;line-height:1.05}
+.result div:last-child{background:var(--accent-2);border-color:var(--accent-2)}
+.result div:last-child b,.result div:last-child span{color:#fff}
+.result span{font-size:14px;color:var(--muted)}
+.note{font-size:13.5px;color:var(--faint)}
+.story{display:grid;gap:20px;align-content:space-between;overflow:hidden;background:linear-gradient(180deg,var(--surface),var(--accent-soft))}
+.story .phone{justify-self:center;width:min(240px,68%);height:auto;margin-bottom:-110px;filter:drop-shadow(0 30px 40px rgba(23,25,30,.22))}
+.trio{display:grid;gap:16px}
+.trio .wide{display:grid;grid-template-columns:1fr 96px;gap:16px;align-items:center}
+.trio .wide > svg{width:100%;height:auto}
+
+/* entrega */
+.deliver{display:grid;gap:24px;align-items:start}
+.side{display:grid;gap:18px}
+/* planos: adaptação do bloco de preços em React (título que desce palavra por palavra, cards com destaque,
+   botões em degradê, lista com check duplo da Lucide), refeito em HTML/CSS com as cores da marca */
+.price-head{display:grid;gap:20px;align-items:end;margin-bottom:clamp(28px,4vw,44px)}
+.price-head > div{display:grid;gap:16px;max-width:680px}
+.price-head svg{width:clamp(180px,26vw,280px);height:auto}
+.cw{display:inline-block;overflow:hidden;vertical-align:bottom;padding:0 .06em .14em;margin:0 -.06em -.14em}
+.cw > span{display:inline-block}
+.plans{display:grid;gap:16px}
+.plan{border-radius:var(--r-md);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);padding:clamp(22px,2.4vw,28px);display:grid;gap:20px;align-content:start;min-width:0}
+.plan.hot{background:var(--accent-2);border-color:var(--accent-2);color:#fff;box-shadow:0 0 0 1px var(--accent-2),var(--shadow)}
+.plan header{display:grid;gap:12px}
+.plan-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.plan h3{font-size:clamp(24px,2.4vw,30px);line-height:1.1}
+.plan .badge{padding:5px 12px;border-radius:999px;background:var(--accent-2);color:#fff;font-size:13.5px;font-weight:600;white-space:nowrap}
+.plan p{color:var(--muted);font-size:15.5px;line-height:1.5}
+.plan .term{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px}
+.plan .term b{font-size:40px;font-weight:600;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.plan .term span{color:var(--muted)}
+.plan .acts{display:grid;gap:12px}
+.pbtn{display:block;width:100%;padding:15px 16px;border-radius:14px;border:1px solid var(--line);font-size:18px;font-weight:600;text-align:center;text-decoration:none;transition:transform .2s ease,filter .2s ease}
+.pbtn:hover{transform:translateY(-1px);filter:brightness(1.06)}
+.pbtn.dark{background:linear-gradient(0deg,var(--ink),#3A3E47);border-color:#3A3E47;color:#fff;box-shadow:0 12px 22px -14px rgba(23,25,30,.8)}
+.pbtn.hot{background:linear-gradient(0deg,var(--accent-2),var(--accent));border-color:var(--accent);color:#fff;box-shadow:0 12px 22px -14px rgba(201,68,0,.8)}
+.pbtn.ghost{background:var(--surface);color:var(--ink);box-shadow:0 10px 20px -16px rgba(23,25,30,.5)}
+.plan .feat{display:grid;gap:12px;padding-top:20px;border-top:1px solid var(--line)}
+.plan.hot .feat{border-color:rgba(255,255,255,.4)}
+.plan.hot p,.plan.hot .term span,.plan.hot .feat .mono,.plan.hot .checks{color:#fff}
+.plan.hot .badge{background:#fff;color:var(--accent-2)}
+.plan.hot .pbtn.hot{background:#fff;border-color:#fff;color:var(--accent-2);box-shadow:0 12px 22px -14px rgba(23,25,30,.6)}
+.plan.hot .checks li::before{border-color:#fff}
+.plan .feat .mono{font-size:13px;color:var(--ink);font-weight:500}
+.plan .feat h4{margin:0;font-size:15.5px;font-weight:500}
+.checks{list-style:none;margin:0;padding:0;display:grid;gap:10px;font-size:15px;font-weight:600;color:var(--muted)}
+.checks li{display:grid;grid-template-columns:24px 1fr;gap:12px;align-items:start;line-height:1.5}
+.checks li::before{content:"";width:24px;height:24px;border-radius:50%;border:1px solid var(--accent);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E85002' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 6 7 17l-5-5'/%3E%3Cpath d='m22 10-7.5 7.5L13 16'/%3E%3C/svg%3E") center/15px no-repeat}
+.dgrid{display:grid;gap:12px}
+.drow{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;padding:20px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
+.drow .ico{margin:0}
+.drow h3{font-size:17.5px;margin:0 0 2px;line-height:1.3}
+.drow p{color:var(--muted);font-size:15.5px;line-height:1.45}
+
+/* implantação */
+.rail{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.rail li{position:relative;display:grid;gap:6px;padding:22px 22px 22px 72px;border-radius:var(--r-lg);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
+/* número do passo: ícone de número (Tabler) num quadrado escuro, igual aos passos do "Como funciona" */
+.rail .n{position:absolute;left:20px;top:22px;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--ink);color:#fff}
+.rail .n svg{width:26px;height:26px}
+.rail .n svg *{stroke-width:2.75}
+.rail li:last-child{background:var(--accent-2);color:#fff;border-color:var(--accent-2)}
+.rail li:last-child p{color:#fff}
+.rail li:last-child .n{background:#fff;color:var(--accent-2)}
+/* seta dupla entre um passo e o próximo (ícone chevrons-right da Lucide): para baixo quando os passos estão empilhados,
+   para a direita quando ficam lado a lado (1024px para cima). Fica em cima do vão entre os cards. */
+.rail li:not(:last-child)::after{content:"";position:absolute;z-index:1;left:50%;bottom:-23px;width:34px;height:34px;margin-left:-17px;border-radius:50%;border:1px solid var(--line);box-shadow:var(--shadow);background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23E85002' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 17l5-5l-5-5m7 10l5-5l-5-5'/%3E%3C/svg%3E") center/20px no-repeat;transform:rotate(90deg)}
+.rail h3{font-size:19px}
+.rail p{color:var(--muted);font-size:16px}
+
+/* faq */
+.faq{display:grid;gap:28px;align-items:start}
+/* celular primeiro: título, texto, botão e ilustração das dúvidas centralizados; na tela larga (duas colunas) voltam para a esquerda */
+.faq .contact{display:grid;gap:14px;justify-items:center;text-align:center}
+.faq .contact .art{max-width:260px;width:100%;margin-top:4px}
+.qa{display:grid;gap:10px}
+.qa details{border-radius:var(--r-md);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden}
+.qa summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 22px;font-weight:600;font-size:17px;line-height:1.35}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::after{content:"";flex:none;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--surface-2) center no-repeat;background-image:linear-gradient(var(--accent),var(--accent)),linear-gradient(var(--accent),var(--accent));background-size:12px 2px,2px 12px;transition:transform .25s ease}
+.qa details[open] summary::after{transform:rotate(45deg)}
+.qa details p{padding:0 22px 22px;color:var(--muted);font-size:16.5px;max-width:62ch}
+.qa details p:has(+ ul){padding-bottom:10px}
+.qa details ul{margin:0;padding:0 22px 22px 42px;display:grid;grid-template-columns:repeat(2,1fr);gap:4px 24px;color:var(--muted);font-size:16.5px;max-width:62ch}
+
+/* cta final */
+.final{padding-block:clamp(24px,4vw,48px) clamp(64px,8vw,104px)}
+.cta{position:relative;overflow:hidden;border-radius:var(--r-xl);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-lg);padding:clamp(28px,5vw,64px);display:grid;gap:24px;align-items:center}
+.cta::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 100% 100%,var(--accent-soft),transparent 70%);pointer-events:none}
+.cta > *{position:relative}
+.cta h2{font-size:clamp(32px,5vw,56px);line-height:1.03;max-width:15ch}
+.cta .row{display:flex;flex-wrap:wrap;gap:12px}
+.cta .meta,.chips{display:flex;flex-wrap:wrap;gap:10px}
+.cta .art{max-width:520px;justify-self:center;width:100%}
+
+/* faixas (evolução, privacidade, indique): um card largo com texto de um lado e ilustração ou formulário do outro */
+.band{border-radius:var(--r-xl);box-shadow:var(--shadow-lg);padding:clamp(24px,4vw,48px);display:grid;gap:clamp(24px,3vw,36px)}
+.bhead{display:grid;gap:24px;align-items:center}
+.bhead > div{display:grid;gap:16px;justify-items:start}
+.bhead .art{max-width:420px;width:100%}
+.bhead > .art{justify-self:center}
+.band .drow{background:var(--surface-2);box-shadow:none}
+.three{display:grid;gap:12px}
+
+/* harmonia entre seções: todo card de lista tem o mesmo respiro, raio, ícone e letra;
+   dentro de cada lista, todos os cards ficam com a mesma altura */
+.prob .small,.step,.drow,.trio > .card{padding:20px;border-radius:var(--r-md);min-height:112px}
+.prob .small,.step,.drow{align-items:center}
+.prob .small h3,.step h3,.drow h3,.trio > .card h3,.rail h3{font-size:18px;line-height:1.3;margin:0 0 2px}
+.prob .small p,.step p,.drow p,.trio > .card p,.rail p{font-size:15.5px;line-height:1.45}
+.rail li{border-radius:var(--r-md)}
+.steps,.dgrid,.three,.rail,.tele{grid-auto-rows:1fr}
+.form{display:grid;gap:14px;width:100%}
+.form label{display:grid;gap:6px;font-weight:500;font-size:15.5px}
+.form small{color:var(--faint);font-weight:400}
+.form input{width:100%;min-height:52px;padding:0 16px;border-radius:14px;border:1.5px solid rgba(23,25,30,.28);background:var(--surface-2);font:inherit;color:var(--ink)}
+.form input:focus-visible{border-color:var(--accent);outline-offset:1px}
+
+/* WhatsApp flutuante: fixo no canto em todas as telas */
+.fab{display:grid;position:fixed;z-index:60;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border-radius:50%;place-items:center;background:#1DA851;color:#fff;box-shadow:0 14px 28px -10px rgba(23,25,30,.5)}
+.fab svg{width:30px;height:30px}
+/* balão da Ana acima do botão de WhatsApp (celular e desktop): aparece quando a pessoa passa do vídeo, some em 10 s ou no X; tocar nele abre a conversa */
+.ana{position:fixed;z-index:60;right:16px;bottom:calc(86px + env(safe-area-inset-bottom,0px));max-width:min(270px,calc(100vw - 48px));opacity:0;visibility:hidden;transform:translateY(8px) scale(.96);transform-origin:100% 100%;transition:opacity .25s ease,transform .25s ease,visibility .25s}
+.ana.on{opacity:1;visibility:visible;transform:none}
+.ana a{display:flex;align-items:center;gap:10px;padding:10px 14px 10px 10px;border-radius:18px 18px 4px 18px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-lg);text-decoration:none;font-size:14.5px;line-height:1.3;color:var(--muted)}
+.ana img{width:40px;height:40px;border-radius:50%;border:2px solid var(--accent);flex:none}
+.ana b{display:block;color:var(--ink);font-weight:600;font-size:13.5px}
+.ana button{position:absolute;top:-10px;left:-10px;width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow);display:grid;place-items:center;padding:0;font-size:16px;line-height:1;color:var(--muted)}
+.ana button::after{content:"";position:absolute;inset:-9px}
+
+footer{border-top:1px solid var(--line);background:var(--surface);padding-block:clamp(40px,6vw,64px) 40px;color:var(--muted);font-size:14px}
+footer .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:32px 24px}
+/* tela larga: marca na ponta esquerda, última coluna encostada na direita, as demais distribuídas por igual no meio */
+@media (min-width:1024px){footer .cols{grid-template-columns:minmax(220px,300px) repeat(4,auto);justify-content:space-between}}
+footer .about{display:grid;gap:12px;justify-items:start;align-content:start;max-width:34ch}
+footer .about img{height:40px;width:auto;display:block}
+footer .about b{color:var(--ink);font-weight:600}
+footer h4{font-size:13px;font-weight:600;color:var(--ink);margin:0 0 12px}
+footer ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+footer a{color:inherit;text-decoration:none;overflow-wrap:anywhere}
+footer .cols > *{min-width:0}
+footer a:hover{color:var(--accent-3)}
+footer .legal{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;margin-top:32px;padding-top:20px;border-top:1px solid var(--line);color:var(--faint);font-size:13px}
+
+@media (max-width:560px){
+  .calc .head{grid-template-columns:1fr}
+  .calc .head .art{width:100%;max-width:300px;margin:0}
+  .price-head svg{display:none}
+  .play-inner{padding:8px 18px 8px 8px;gap:12px}
+  .play-btn{width:48px;height:48px}
+  .play-btn svg{width:20px;height:20px}
+  .play-txt b{font-size:16px}
+  .play-txt span{display:none}
+  .monitor{padding:6px;border-radius:22px}
+  .screen{border-radius:16px}
+}
+/* o botão de WhatsApp fica fixo no canto em todas as telas: o rodapé deixa espaço para ele não cobrir o texto */
+footer{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+@media (min-width:720px){
+  .wrap{padding-inline:28px}
+  .hero-art{margin-top:12px}
+  .hero-art .art svg{position:static;width:100%;transition:transform .3s ease}
+  .hero-art .art img{height:auto}
+  .tele{grid-template-columns:repeat(3,1fr);gap:12px}
+  .tele div{grid-template-columns:1fr;align-items:start;gap:2px;padding:16px}
+  .prob{grid-template-columns:repeat(2,1fr)}
+  .prob .big{grid-column:1/-1}
+  .arena{grid-template-columns:repeat(2,1fr)}
+  .arena .calc{grid-column:1/-1}
+  .trio{grid-template-columns:repeat(6,1fr);grid-column:1/-1}
+  .trio > *{grid-column:span 2}
+  .trio > .wide{grid-column:span 3;grid-template-columns:1fr minmax(110px,38%)}
+  .trio{grid-auto-rows:1fr}
+  .dgrid{grid-template-columns:repeat(2,1fr)}
+  .plans{grid-template-columns:repeat(2,1fr)}
+  .plans > :last-child{grid-column:1/-1}
+  .three{grid-template-columns:repeat(3,1fr)}
+}
+@media (min-width:1024px){
+  .nav ul{display:flex}
+  .hero-grid{grid-template-columns:1fr 1.7fr 1fr;gap:12px}
+  .hero-art{display:contents}
+  .hero-art .art:first-child{grid-column:1;grid-row:1;max-width:280px}
+  .hero-art .art:last-child{grid-column:3;grid-row:1;max-width:280px}
+  .hero-copy{grid-column:2;grid-row:1;padding-bottom:24px}
+  .sec-head.split{grid-template-columns:1.15fr 1fr;align-items:end;gap:40px}
+  .prob{grid-template-columns:7fr 5fr}
+  .prob .big{grid-column:1;grid-row:1/4}
+  .prob.flip{grid-template-columns:5fr 7fr}
+  .prob.flip .big{grid-column:2}
+  .bhead{grid-template-columns:1.15fr 1fr;gap:40px}
+  .price-head{grid-template-columns:1fr auto}
+  .plans{grid-template-columns:repeat(3,1fr)}
+  .plans > :last-child{grid-column:auto}
+  .how{grid-template-columns:1.2fr 1fr;gap:28px}
+  /* a coluna mais curta acompanha a rolagem da mais alta: o painel ao lado da lista, os passos ao lado da cena */
+  .how .scene,.how .steps{position:sticky;top:96px}
+  .prob{grid-template-rows:repeat(3,1fr)}
+  .plans{grid-template-rows:repeat(4,auto) 1fr}
+  .plan{grid-row:span 5;grid-template-rows:subgrid}
+  .plan header{grid-row:span 3;grid-template-rows:subgrid}
+  .arena{grid-template-columns:7fr 5fr}
+  .arena .calc{grid-column:auto}
+  .fields{grid-template-columns:1fr 1fr;gap:24px}
+  .deliver{grid-template-columns:4fr 7fr;gap:28px}
+  .side{position:sticky;top:96px}
+  .rail{grid-template-columns:repeat(5,1fr)}
+  .rail li{padding:78px 20px 24px}
+  .rail li:not(:last-child)::after{left:auto;bottom:auto;right:-23px;top:50%;margin:-17px 0 0;transform:none}
+  .faq{grid-template-columns:5fr 7fr;gap:48px}
+  .faq .contact{position:sticky;top:96px;justify-items:start;text-align:left}
+  .cta{grid-template-columns:1fr 1fr}
+}
+/* cursor do desktop: seta laranja minimalista, estilo aviãozinho de papel, com a ponta como ponto de clique */
+@media (hover:hover) and (pointer:fine){
+  :root{--cur:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M4 3L27 12L15.5 15.5L12 27Z' fill='%23E85002' stroke='%23FFFFFF' stroke-width='1.5' stroke-linejoin='round'/%3E%3C/svg%3E") 4 3}
+  *{cursor:var(--cur),auto}
+  a,a *,button,button *,label,.qa summary,input[type=range]{cursor:var(--cur),pointer}
+  .form input{cursor:text}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+
+<header class="top">
+  <div class="wrap">
+    <nav class="nav" aria-label="Principal">
+      <a class="brand" href="#topo"><img src="assets/logo.png" alt="" height="36">Aatlas <span>Replay</span></a>
+      <ul>
+        <li><a href="#video">Vídeo</a></li>
+        <li><a href="#como-funciona">Como funciona</a></li>
+        <li><a href="#sua-marca">Sua marca</a></li>
+        <li><a href="#duvidas">Dúvidas</a></li>
+      </ul>
+      <a class="btn btn-primary cta-link" href="https://wa.me/5541998145475" target="_blank" rel="noopener">Agendar visita</a>
+    </nav>
+  </div>
+</header>
+
+<main id="topo">
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <span class="pill mono" data-reveal><span class="dot"></span><b>Replay com a marca da sua arena</b></span>
+          <h1 data-reveal>O lance no celular de quem jogou.<span class="it">Em 10 segundos.</span></h1>
+          <p class="lead" data-reveal>O jogador aperta o botão na quadra, abre o vídeo no navegador e posta. Sem app, sem cadastro, com o nome da sua arena em cada lance.</p>
+          <div class="hero-ctas" data-reveal>
+            <a class="btn btn-primary cta-link" href="https://wa.me/5541998145475" target="_blank" rel="noopener">Agendar visita técnica</a>
+            <a class="btn btn-line" href="#video" id="hero-watch">
+              <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>Ver como funciona</a>
+          </div>
+        </div>
+        <div class="hero-art">
+          <div class="art" data-reveal><img src="assets/p-botao.webp" alt="Jogador apertando o botão de replay na coluna da quadra, com a câmera gravando" width="760" height="824" decoding="async"><svg viewBox="0 0 360 300" role="img" aria-label="Quadra vista de cima com a câmera gravando o jogo" xmlns="http://www.w3.org/2000/svg"><g transform="rotate(-6 180 150)"><rect x="68" y="56" width="224" height="206" rx="20" fill="#17191E" opacity=".09"/><rect x="60" y="40" width="240" height="210" rx="20" fill="#E85002"/><rect x="80" y="60" width="200" height="170" rx="3" fill="none" stroke="#FFFFFF" stroke-width="3" opacity=".9"/><path d="M80 104.2H280M80 185.8H280M180.0 60V104.2M180.0 185.8V230" stroke="#FFFFFF" stroke-width="2.4" opacity=".5"/><path d="M296 44L176 232H64V150Z" fill="#FFFFFF" opacity=".13"/><path d="M66 145H294" stroke="#17191E" stroke-width="5" stroke-linecap="round"/><circle cx="66" cy="145" r="6.5" fill="#17191E"/><circle cx="294" cy="145" r="6.5" fill="#17191E"/><path d="M126 196C140 128 178 96 206 104" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-dasharray="1 9" stroke-linecap="round"/><circle cx="120" cy="208" r="10" fill="#FFFFFF"/><circle cx="120" cy="208" r="4.5" fill="#17191E"/><circle cx="236" cy="200" r="10" fill="#FFFFFF"/><circle cx="236" cy="200" r="4.5" fill="#17191E"/><circle cx="136" cy="88" r="10" fill="#FFFFFF"/><circle cx="136" cy="88" r="4.5" fill="#17191E"/><circle cx="240" cy="96" r="10" fill="#FFFFFF"/><circle cx="240" cy="96" r="4.5" fill="#17191E"/><circle cx="216" cy="112" r="9" fill="#17191E" opacity=".18"/><circle cx="212" cy="106" r="9" fill="#FFFFFF"/><g transform="translate(300 40) rotate(40)"><rect x="-19" y="-12" width="38" height="24" rx="8" fill="#17191E"/><circle cx="-7" cy="0" r="5.5" fill="#3A3E47"/><circle cx="10" cy="-4" r="2.6" fill="#FF5A4D"/></g></g><rect x="21" y="31" width="106" height="34" rx="17.0" fill="#17191E" opacity=".09"/><rect x="18" y="24" width="112" height="34" rx="17.0" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.5"/><circle cx="38" cy="41" r="5" fill="#E5484D"/><text x="50" y="45.5" font-size="13" font-weight="600" fill="#17191E" text-anchor="start">Gravando</text><rect x="225" y="255" width="116" height="34" rx="17.0" fill="#17191E" opacity=".09"/><rect x="222" y="248" width="122" height="34" rx="17.0" fill="#17191E"/><path d="M238.6 260.1L247.6 265L238.6 269.9Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="2.0" stroke-linejoin="round"/><text x="258" y="269.5" font-size="12.5" font-weight="600" fill="#FFFFFF" text-anchor="start">Lance salvo</text><path d="M326 143V157M319 150H333" stroke="#E85002" stroke-width="3" stroke-linecap="round"/><path d="M36 209V219M31 214H41" stroke="#E85002" stroke-width="3" stroke-linecap="round"/></svg></div>
+          <div class="art" data-reveal><img src="assets/p-celular.webp" alt="Jogador vendo e baixando o replay do lance no celular" width="620" height="899" decoding="async"><svg viewBox="0 0 360 300" role="img" aria-label="Celular mostrando o replay do lance pronto para compartilhar" xmlns="http://www.w3.org/2000/svg"><rect x="126" y="30" width="128" height="262" rx="26" fill="#17191E" opacity=".10"/><rect x="120" y="16" width="140" height="268" rx="26" fill="#17191E"/><rect x="127" y="23" width="126" height="254" rx="20" fill="#FFFFFF"/><path d="M127 43a20 20 0 0 1 20-20h86a20 20 0 0 1 20 20v117h-126z" fill="#E85002"/><rect x="143" y="50" width="94" height="96" rx="3" fill="none" stroke="#FFFFFF" stroke-width="2" opacity=".45"/><path d="M143 75.0H237M143 121.0H237M190.0 50V75.0M190.0 121.0V146" stroke="#FFFFFF" stroke-width="1.6" opacity=".5"/><circle cx="190" cy="98" r="23" fill="#FFFFFF"/><path d="M184.4 91.4L196.4 98L184.4 104.6Z" fill="#17191E" stroke="#17191E" stroke-width="2.6" stroke-linejoin="round"/><rect x="137" y="33" width="52" height="16" rx="8" fill="#FFFFFF" opacity=".95"/><text x="163" y="44.5" font-size="7" font-weight="700" fill="#17191E" text-anchor="middle">SUA MARCA</text><rect x="139" y="148" width="102" height="4" rx="2" fill="#FFFFFF" opacity=".4"/><rect x="139" y="148" width="62" height="4" rx="2" fill="#FFFFFF"/><circle cx="201" cy="150" r="5" fill="#FFFFFF"/><rect x="139" y="174" width="74" height="8" rx="4" fill="#17191E"/><rect x="139" y="189" width="50" height="6" rx="3" fill="#E2DDD5"/><rect x="139" y="210" width="48" height="26" rx="13" fill="#FCEBDF"/><text x="163" y="227" font-size="9" font-weight="600" fill="#E85002" text-anchor="middle">Baixar</text><rect x="192" y="210" width="50" height="26" rx="13" fill="#17191E"/><text x="217" y="227" font-size="9" font-weight="600" fill="#FFFFFF" text-anchor="middle">Enviar</text><rect x="170" y="262" width="40" height="4" rx="2" fill="#E2DDD5"/><rect x="18" y="82" width="130" height="50" rx="16" fill="#17191E" opacity=".09"/><rect x="14" y="72" width="138" height="50" rx="16" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.5"/><circle cx="40" cy="97" r="14" fill="#E85002"/><path d="M37.3 93.2L44.3 97L37.3 100.8Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1.5" stroke-linejoin="round"/><text x="62" y="94" font-size="11.5" font-weight="600" fill="#17191E" text-anchor="start">Lance pronto</text><text x="62" y="109" font-size="9.5" font-weight="500" fill="#858891" text-anchor="start">na sua arena</text><rect x="231" y="245" width="114" height="36" rx="18.0" fill="#17191E" opacity=".09"/><rect x="228" y="238" width="120" height="36" rx="18.0" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.5"/><circle cx="248" cy="256" r="8" fill="none" stroke="#E85002" stroke-width="2.4"/><path d="M248 251.5V256l3 2" fill="none" stroke="#E85002" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><text x="262" y="260.5" font-size="11.5" font-weight="600" fill="#17191E" text-anchor="start">~10 segundos</text><path d="M300 63V77M293 70H307" stroke="#E85002" stroke-width="3" stroke-linecap="round"/><path d="M88 171V181M83 176H93" stroke="#E85002" stroke-width="3" stroke-linecap="round"/><path d="M322 145V155M317 150H327" stroke="#E85002" stroke-width="3" stroke-linecap="round"/></svg></div>
+        </div>
+      </div>
+
+      <div class="watch" id="video">
+        <div class="watch-cta" data-reveal>
+          <span class="tag"><svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>Entenda em 37 segundos</span>
+          <span class="hint">clique no vídeo para assistir com som</span>
+        </div>
+        <svg class="doodle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 15l5 5l5-5"/><path d="M4 4h7a4 4 0 0 1 4 4v12"/></svg>
+        <div class="monitor" data-reveal>
+          <div class="screen">
+            <video id="vid" src="assets/aatlas-replay.mp4?v=2" poster="assets/poster.jpg" playsinline preload="metadata" aria-label="Vídeo: como funciona o Aatlas Replay"></video>
+            <button class="play" id="play" type="button" aria-label="Assistir ao vídeo com som">
+              <span class="play-inner">
+                <span class="play-btn"><svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg></span>
+                <span class="play-txt"><b id="play-title">Assistir agora</b><span>0:37 · com narração e música</span></span>
+              </span>
+            </button>
+            <button class="fs" id="fs" type="button" aria-label="Ver o vídeo em tela cheia" title="Tela cheia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+          </div>
+        </div>
+        <div class="tele" data-reveal>
+          <div><b>0<small>vídeos</small></b><span>da sua quadra foram postados hoje com a sua marca</span></div>
+          <div><b><small style="margin:0 3px 0 0">R$</small>0</b><span>é o que sua arena fatura hoje com patrocínio em vídeo</span></div>
+          <div><b>~10<small>s</small></b><span>é o tempo para isso mudar: do botão ao celular</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sports" aria-label="Esportes atendidos">
+      <div class="track">
+        <div class="set"><span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="currentColor" d="M19.04 4.85C17.34 3.2 15.33 2.25 13 2v3.62l9 5.18c-.28-2.3-1.27-4.3-2.96-5.95M12 22c3.44 0 6.16-1.38 8.17-4.14L17.06 16l-8.99 5.2c1.25.53 2.57.8 3.93.8m1-10.59l8.15 4.66c.44-.94.73-1.93.85-2.96l-9-5.18zm-9.12 6.4c.66.91 1.38 1.65 2.17 2.19l8.99-5.1L12 13.15zM11.04 2C10 2.09 9 2.36 8 2.8v10.35l3.04-1.74zM2 12c0 1.39.3 2.77.89 4.12L6 14.28V4c-2.67 2-4 4.65-4 8"/></svg>Vôlei de praia</span><span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="currentColor" d="m16.93 17.12l-.8-1.36l1.46-4.37l1.41-.47l1 .75v.14c0 .07.03.13.03.19c0 1.97-.66 3.71-1.97 5.21zM9.75 15l-1.37-4.03L12 8.43l3.62 2.54L14.25 15zM12 20.03c-.88 0-1.71-.14-2.5-.42l-.69-1.51l.66-1.1h5.11l.61 1.1l-.69 1.51c-.79.28-1.62.42-2.5.42m-6.06-2.82c-.53-.62-.99-1.45-1.38-2.46c-.39-1.02-.59-1.94-.59-2.75c0-.06.03-.12.03-.19v-.14l1-.75l1.41.47l1.46 4.37l-.8 1.36zM11 5.29v1.4L7 9.46l-1.34-.42l-.42-1.36C5.68 7 6.33 6.32 7.19 5.66s1.68-1.09 2.46-1.31zm3.35-.94c.78.22 1.6.65 2.46 1.31S18.32 7 18.76 7.68l-.42 1.36l-1.34.43l-4-2.77V5.29zm-9.42.58C3 6.89 2 9.25 2 12s1 5.11 2.93 7.07S9.25 22 12 22s5.11-1 7.07-2.93S22 14.75 22 12s-1-5.11-2.93-7.07S14.75 2 12 2S6.89 3 4.93 4.93"/></svg>Futevôlei</span><span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="currentColor" d="M18.575 22L12.7 16.125q-.725.65-1.612.95t-1.788.3q-1 0-1.937-.375t-1.688-1.125l-3.8-3.775q-.425-.425-.65-.987T1 9.975t.225-1.137t.65-.988L5.85 3.875q.425-.425.988-.65T7.974 3t1.138.225t.987.65l3.775 3.8q.75.75 1.125 1.688t.375 1.937q0 .9-.312 1.788T14.1 14.7l5.9 5.9zM19.5 9q-1.45 0-2.475-1.025T16 5.5t1.025-2.475T19.5 2t2.475 1.025T23 5.5t-1.025 2.475T19.5 9"/></svg>Beach tennis</span><span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="currentColor" d="M4 4c-1.11 0-2 .89-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 2h7v2.13c-1.76.46-3 2.05-3 3.87a4.01 4.01 0 0 0 3 3.87V18H4v-2h3V8H4zm9 0h7v2h-3v8h3v2h-7v-2.13c1.76-.46 3-2.05 3-3.87a4.01 4.01 0 0 0-3-3.87zm-9 4h1v4H4zm15 0h1v4h-1zm-6 .27c.62.36 1 1.02 1 1.73s-.38 1.37-1 1.73zm-2 0v3.46c-.62-.36-1-1.02-1-1.73s.38-1.37 1-1.73"/></svg>Futebol society</span><span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="currentColor" d="m18.6 22l-5.825-5.8l-.7.7q-.575.575-1.312.875t-1.513.3t-1.525-.3T6.4 16.9l-4.225-4.25q-.575-.575-.875-1.312T1 9.825t.3-1.512T2.175 7L5 4.175Q5.575 3.6 6.313 3.3T7.825 3t1.513.3t1.312.875L14.9 8.4q.575.575.875 1.325t.3 1.525t-.3 1.513t-.875 1.312l-.7.7L20 20.6zM5.175 11.1q.325 0 .538-.212t.212-.538t-.212-.537t-.538-.213t-.537.213t-.213.537t.213.538t.537.212m1.6-1.575q.325 0 .538-.212t.212-.538t-.213-.537t-.537-.213t-.537.213t-.213.537t.213.538t.537.212m.175 3.35q.325 0 .538-.213t.212-.537t-.213-.537t-.537-.213t-.537.213t-.213.537t.213.538t.537.212m1.4-4.95q.325 0 .538-.213t.212-.537t-.213-.537t-.537-.213t-.537.213t-.213.537t.213.538t.537.212m.2 3.375q.325 0 .537-.213t.213-.537t-.213-.537T8.55 9.8t-.537.213t-.213.537t.213.538t.537.212m.15 3.35q.325 0 .538-.213t.212-.537t-.212-.537t-.538-.213t-.537.213t-.213.537t.213.538t.537.212m1.425-4.95q.325 0 .538-.213t.212-.537t-.213-.537t-.537-.213t-.537.213t-.213.537t.213.538t.537.212m.175 3.35q.325 0 .538-.213t.212-.537t-.213-.537t-.537-.213t-.537.213t-.213.537t.213.538t.537.212m1.6-1.6q.325 0 .538-.212t.212-.538t-.213-.537t-.537-.213t-.537.213t-.213.537t.213.538t.537.212M19.5 9q-1.45 0-2.475-1.025T16 5.5t1.025-2.475T19.5 2t2.475 1.025T23 5.5t-1.025 2.475T19.5 9"/></svg>Padel</span><span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 15 15"><path fill="currentColor" d="M11 1.5a1.5 1.5 0 1 1-3 0a1.5 1.5 0 0 1 3 0m0 9.5a1 1 0 1 0 0 2a1 1 0 0 0 0-2m1.84-4.91l-1.91-1.91a.48.48 0 0 0-.37-.18H3.5a.5.5 0 0 0 0 1h2.7L3 11.3a.5.5 0 0 0 0 .2a.511.511 0 0 0 1 .21L5 10h2l-1.93 4.24a.5.5 0 0 0-.07.26a.51.51 0 0 0 1 .2l4.7-9.38l1.44 1.48a.5.5 0 0 0 .7-.71"/></svg>Futsal</span><span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="currentColor" d="M19.78 18.39c.15.15.22.31.22.49c0 .12-.06.29-.18.44c-.38.53-.86.94-1.45 1.24c-.59.29-1.22.44-1.9.44H7.53c-.71 0-1.36-.15-1.94-.44c-.59-.3-1.09-.71-1.46-1.24a.83.83 0 0 1-.13-.44c0-.18.07-.34.2-.49s.3-.22.51-.22c.23 0 .42.1.57.33c.41.5.94.86 1.59 1.04l2.95-3.58l-1.28-3.89c-.18-.57-.1-1.07.22-1.57L11 6.86H8.8L7 9.77L5.41 8.76L7.75 5h5.37c.42 0 .75.12 1.02.35c.26.24.44.45.53.62l.48 1.15C15.5 7.89 16 8.5 16.7 9c.7.45 1.48.69 2.33.69v1.9c-1.09 0-2.08-.27-3-.8a6.1 6.1 0 0 1-2.16-2.08l-1.71 2.7l4.05 2.52v5.66h.26c.45 0 .86-.09 1.26-.31s.73-.47.99-.78c.15-.23.33-.33.53-.33s.38.08.53.22m-5.42-3.14l-3.31-2.07l.95 3.14l-2.76 3.27h5.12zM15 1c-1.1 0-2 .9-2 2s.9 2 2 2s2-.89 2-2s-.89-2-2-2M8 21.5c-.41 0-.75.34-.75.75s.34.75.75.75s.75-.34.75-.75s-.34-.75-.75-.75m8 0c-.41 0-.75.34-.75.75s.34.75.75.75s.75-.34.75-.75s-.34-.75-.75-.75"/></svg>Skate</span><span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><rect width="6.75" height="4.25" x="2.75" y="7.5" rx="1.25"/><rect width="6.75" height="4.25" x="14.5" y="7.5" rx="1.25"/><rect width="5" height="7.5" x="9.5" y="5.75" rx="1.5"/><path d="M9.5 14.75h.5q.75 0 .5.71l-1.75 4.83q-.25.71-.98.55l-.79-.18q-.73-.16-.43-.85l1.9-4.37q.3-.69 1.05-.69m4.5 0h.5q.75 0 1.05.69l1.9 4.37q.3.69-.43.85l-.79.18q-.73.16-.98-.55l-1.75-4.83q-.25-.71.5-.71"/></g></svg>Artes marciais</span></div>
+        <div class="set" aria-hidden="true"><span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="currentColor" d="M19.04 4.85C17.34 3.2 15.33 2.25 13 2v3.62l9 5.18c-.28-2.3-1.27-4.3-2.96-5.95M12 22c3.44 0 6.16-1.38 8.17-4.14L17.06 16l-8.99 5.2c1.25.53 2.57.8 3.93.8m1-10.59l8.15 4.66c.44-.94.73-1.93.85-2.96l-9-5.18zm-9.12 6.4c.66.91 1.38 1.65 2.17 2.19l8.99-5.1L12 13.15zM11.04 2C10 2.09 9 2.36 8 2.8v10.35l3.04-1.74zM2 12c0 1.39.3 2.77.89 4.12L6 14.28V4c-2.67 2-4 4.65-4 8"/></svg>Vôlei de praia</span><span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="currentColor" d="m16.93 17.12l-.8-1.36l1.46-4.37l1.41-.47l1 .75v.14c0 .07.03.13.03.19c0 1.97-.66 3.71-1.97 5.21zM9.75 15l-1.37-4.03L12 8.43l3.62 2.54L14.25 15zM12 20.03c-.88 0-1.71-.14-2.5-.42l-.69-1.51l.66-1.1h5.11l.61 1.1l-.69 1.51c-.79.28-1.62.42-2.5.42m-6.06-2.82c-.53-.62-.99-1.45-1.38-2.46c-.39-1.02-.59-1.94-.59-2.75c0-.06.03-.12.03-.19v-.14l1-.75l1.41.47l1.46 4.37l-.8 1.36zM11 5.29v1.4L7 9.46l-1.34-.42l-.42-1.36C5.68 7 6.33 6.32 7.19 5.66s1.68-1.09 2.46-1.31zm3.35-.94c.78.22 1.6.65 2.46 1.31S18.32 7 18.76 7.68l-.42 1.36l-1.34.43l-4-2.77V5.29zm-9.42.58C3 6.89 2 9.25 2 12s1 5.11 2.93 7.07S9.25 22 12 22s5.11-1 7.07-2.93S22 14.75 22 12s-1-5.11-2.93-7.07S14.75 2 12 2S6.89 3 4.93 4.93"/></svg>Futevôlei</span><span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="currentColor" d="M18.575 22L12.7 16.125q-.725.65-1.612.95t-1.788.3q-1 0-1.937-.375t-1.688-1.125l-3.8-3.775q-.425-.425-.65-.987T1 9.975t.225-1.137t.65-.988L5.85 3.875q.425-.425.988-.65T7.974 3t1.138.225t.987.65l3.775 3.8q.75.75 1.125 1.688t.375 1.937q0 .9-.312 1.788T14.1 14.7l5.9 5.9zM19.5 9q-1.45 0-2.475-1.025T16 5.5t1.025-2.475T19.5 2t2.475 1.025T23 5.5t-1.025 2.475T19.5 9"/></svg>Beach tennis</span><span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="currentColor" d="M4 4c-1.11 0-2 .89-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 2h7v2.13c-1.76.46-3 2.05-3 3.87a4.01 4.01 0 0 0 3 3.87V18H4v-2h3V8H4zm9 0h7v2h-3v8h3v2h-7v-2.13c1.76-.46 3-2.05 3-3.87a4.01 4.01 0 0 0-3-3.87zm-9 4h1v4H4zm15 0h1v4h-1zm-6 .27c.62.36 1 1.02 1 1.73s-.38 1.37-1 1.73zm-2 0v3.46c-.62-.36-1-1.02-1-1.73s.38-1.37 1-1.73"/></svg>Futebol society</span><span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="currentColor" d="m18.6 22l-5.825-5.8l-.7.7q-.575.575-1.312.875t-1.513.3t-1.525-.3T6.4 16.9l-4.225-4.25q-.575-.575-.875-1.312T1 9.825t.3-1.512T2.175 7L5 4.175Q5.575 3.6 6.313 3.3T7.825 3t1.513.3t1.312.875L14.9 8.4q.575.575.875 1.325t.3 1.525t-.3 1.513t-.875 1.312l-.7.7L20 20.6zM5.175 11.1q.325 0 .538-.212t.212-.538t-.212-.537t-.538-.213t-.537.213t-.213.537t.213.538t.537.212m1.6-1.575q.325 0 .538-.212t.212-.538t-.213-.537t-.537-.213t-.537.213t-.213.537t.213.538t.537.212m.175 3.35q.325 0 .538-.213t.212-.537t-.213-.537t-.537-.213t-.537.213t-.213.537t.213.538t.537.212m1.4-4.95q.325 0 .538-.213t.212-.537t-.213-.537t-.537-.213t-.537.213t-.213.537t.213.538t.537.212m.2 3.375q.325 0 .537-.213t.213-.537t-.213-.537T8.55 9.8t-.537.213t-.213.537t.213.538t.537.212m.15 3.35q.325 0 .538-.213t.212-.537t-.212-.537t-.538-.213t-.537.213t-.213.537t.213.538t.537.212m1.425-4.95q.325 0 .538-.213t.212-.537t-.213-.537t-.537-.213t-.537.213t-.213.537t.213.538t.537.212m.175 3.35q.325 0 .538-.213t.212-.537t-.213-.537t-.537-.213t-.537.213t-.213.537t.213.538t.537.212m1.6-1.6q.325 0 .538-.212t.212-.538t-.213-.537t-.537-.213t-.537.213t-.213.537t.213.538t.537.212M19.5 9q-1.45 0-2.475-1.025T16 5.5t1.025-2.475T19.5 2t2.475 1.025T23 5.5t-1.025 2.475T19.5 9"/></svg>Padel</span><span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 15 15"><path fill="currentColor" d="M11 1.5a1.5 1.5 0 1 1-3 0a1.5 1.5 0 0 1 3 0m0 9.5a1 1 0 1 0 0 2a1 1 0 0 0 0-2m1.84-4.91l-1.91-1.91a.48.48 0 0 0-.37-.18H3.5a.5.5 0 0 0 0 1h2.7L3 11.3a.5.5 0 0 0 0 .2a.511.511 0 0 0 1 .21L5 10h2l-1.93 4.24a.5.5 0 0 0-.07.26a.51.51 0 0 0 1 .2l4.7-9.38l1.44 1.48a.5.5 0 0 0 .7-.71"/></svg>Futsal</span><span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="currentColor" d="M19.78 18.39c.15.15.22.31.22.49c0 .12-.06.29-.18.44c-.38.53-.86.94-1.45 1.24c-.59.29-1.22.44-1.9.44H7.53c-.71 0-1.36-.15-1.94-.44c-.59-.3-1.09-.71-1.46-1.24a.83.83 0 0 1-.13-.44c0-.18.07-.34.2-.49s.3-.22.51-.22c.23 0 .42.1.57.33c.41.5.94.86 1.59 1.04l2.95-3.58l-1.28-3.89c-.18-.57-.1-1.07.22-1.57L11 6.86H8.8L7 9.77L5.41 8.76L7.75 5h5.37c.42 0 .75.12 1.02.35c.26.24.44.45.53.62l.48 1.15C15.5 7.89 16 8.5 16.7 9c.7.45 1.48.69 2.33.69v1.9c-1.09 0-2.08-.27-3-.8a6.1 6.1 0 0 1-2.16-2.08l-1.71 2.7l4.05 2.52v5.66h.26c.45 0 .86-.09 1.26-.31s.73-.47.99-.78c.15-.23.33-.33.53-.33s.38.08.53.22m-5.42-3.14l-3.31-2.07l.95 3.14l-2.76 3.27h5.12zM15 1c-1.1 0-2 .9-2 2s.9 2 2 2s2-.89 2-2s-.89-2-2-2M8 21.5c-.41 0-.75.34-.75.75s.34.75.75.75s.75-.34.75-.75s-.34-.75-.75-.75m8 0c-.41 0-.75.34-.75.75s.34.75.75.75s.75-.34.75-.75s-.34-.75-.75-.75"/></svg>Skate</span><span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><rect width="6.75" height="4.25" x="2.75" y="7.5" rx="1.25"/><rect width="6.75" height="4.25" x="14.5" y="7.5" rx="1.25"/><rect width="5" height="7.5" x="9.5" y="5.75" rx="1.5"/><path d="M9.5 14.75h.5q.75 0 .5.71l-1.75 4.83q-.25.71-.98.55l-.79-.18q-.73-.16-.43-.85l1.9-4.37q.3-.69 1.05-.69m4.5 0h.5q.75 0 1.05.69l1.9 4.37q.3.69-.43.85l-.79.18q-.73.16-.98-.55l-1.75-4.83q-.25-.71.5-.71"/></g></svg>Artes marciais</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="problema">
+    <div class="wrap">
+      <div class="prob">
+        <article class="card big" data-reveal>
+          <span class="mono eyebrow">O problema</span>
+          <h2>Todo mundo quer o vídeo do ponto. <span class="it">Ninguém estava filmando.</span></h2>
+          <div class="art"><img src="assets/p-problema.webp" alt="Jogador procurando o lance no celular, sem achar" width="560" height="957" loading="lazy" decoding="async"><svg viewBox="0 0 320 290" role="img" aria-label="Celular filmando a quadra vazia enquanto a bola passa fora do quadro" xmlns="http://www.w3.org/2000/svg"><path d="M30 74C96 6 214 4 272 50" fill="none" stroke="#E85002" stroke-width="3" stroke-dasharray="1 10" stroke-linecap="round"/><circle cx="280" cy="58" r="15" fill="#E85002"/><path d="M268.0 51.2Q280 59.5 292.0 51.2M268.0 65.5Q280 57.2 292.0 65.5" fill="none" stroke="#FFFFFF" stroke-width="2.1" stroke-linecap="round" opacity=".85"/><path d="M256 32l-9-8M262 24l-6-10M250 42l-11-4" stroke="#17191E" stroke-width="3" stroke-linecap="round"/><g transform="rotate(-5 150 150)"><rect x="38" y="98" width="212" height="120" rx="20" fill="#17191E" opacity=".10"/><rect x="32" y="84" width="224" height="124" rx="20" fill="#17191E"/><rect x="40" y="92" width="208" height="108" rx="13" fill="#F1EDE6"/><path d="M40 166H248" stroke="#E2DDD5" stroke-width="3"/><path d="M164 166V132" stroke="#E2DDD5" stroke-width="3"/><path d="M128 132H200" stroke="#E2DDD5" stroke-width="3" stroke-linecap="round"/><path d="M132 126v-12h14M196 126v-12h-14M132 164v12h14M196 164v12h-14" fill="none" stroke="#17191E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/><rect x="50" y="102" width="62" height="20" rx="10" fill="#FFFFFF"/><circle cx="62" cy="112" r="4" fill="#E5484D"/><text x="71" y="116" font-size="9" font-weight="700" fill="#17191E" text-anchor="start">REC 0:42</text><circle cx="230" cy="146" r="9" fill="none" stroke="#17191E" stroke-width="3" opacity=".3"/></g><rect x="81" y="239" width="158" height="38" rx="19.0" fill="#17191E" opacity=".09"/><rect x="78" y="232" width="164" height="38" rx="19.0" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.5"/><path d="M97 251c4-7 10-10 15-10s11 3 15 10c-4 7-10 10-15 10s-11-3-15-10z" fill="none" stroke="#858891" stroke-width="2.4" stroke-linejoin="round"/><circle cx="112" cy="251" r="3.5" fill="#858891"/><path d="M100 263L124 239" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/><path d="M100 263L124 239" stroke="#858891" stroke-width="2.4" stroke-linecap="round"/><text x="136" y="256" font-size="13" font-weight="600" fill="#17191E" text-anchor="start">Lance perdido</text></svg></div>
+        </article>
+        <article class="card small" data-reveal>
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg></span>
+          <div><h3>O celular no alambrado</h3><p>Grava o jogo inteiro e ninguém acha o lance depois.</p></div>
+        </article>
+        <article class="card small" data-reveal>
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></svg></span>
+          <div><h3>O amigo que filma não joga</h3><p>E o melhor ponto acontece quando ele parou de gravar.</p></div>
+        </article>
+        <article class="card small tinted" data-reveal>
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg></span>
+          <div><h3>A vitrine que a arena perde</h3><p>Sem vídeo, ninguém vê onde aquele jogo aconteceu.</p></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="sua-marca" style="padding-top:0">
+    <div class="wrap">
+      <div class="prob flip">
+        <article class="card big" data-reveal>
+          <span class="mono eyebrow">Sua marca, não a nossa</span>
+          <h2>O jogador lembra da sua arena. <span class="it">Não do fornecedor.</span></h2>
+          <p class="lead">Em muitos sistemas de replay, o jogador baixa o aplicativo do fornecedor e cria conta lá. Aqui, o site é da arena: seu nome, suas cores, seu endereço na internet e seus patrocinadores.</p>
+          <div class="art one"><svg viewBox="0 0 540 300" role="img" aria-label="Site da arena com o nome, as cores e os patrocinadores dela, aberto no computador e no celular" xmlns="http://www.w3.org/2000/svg"><rect x="46" y="38" width="400" height="244" rx="20" fill="#17191E" opacity=".09"/><rect x="40" y="24" width="400" height="248" rx="20" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.5"/><path d="M40 44a20 20 0 0 1 20-20h360a20 20 0 0 1 20 20v18H40z" fill="#FAF8F5"/><path d="M40 62H440" stroke="#E2DDD5" stroke-width="1.5"/><circle cx="62" cy="43" r="4.5" fill="#E2DDD5"/><circle cx="76" cy="43" r="4.5" fill="#E2DDD5"/><circle cx="90" cy="43" r="4.5" fill="#E2DDD5"/><rect x="112" y="33" width="230" height="20" rx="10" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.2"/><rect x="123" y="41" width="8" height="7" rx="1.5" fill="#30A46C"/><path d="M124.5 41v-2a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="#30A46C" stroke-width="1.5"/><text x="138" y="47" font-size="10" font-weight="600" fill="#17191E" text-anchor="start">suaarena.com.br</text><rect x="56" y="76" width="368" height="50" rx="12" fill="#E85002"/><circle cx="82" cy="101" r="14" fill="#FFFFFF"/><text x="82" y="105" font-size="10" font-weight="700" fill="#E85002" text-anchor="middle">SA</text><text x="106" y="98" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="start">Sua Arena</text><text x="106" y="113" font-size="9" font-weight="500" fill="#FFFFFF" opacity=".85" text-anchor="start">Lances de hoje · Quadra 2</text><rect x="318" y="90" width="60" height="22" rx="11" fill="#FFFFFF"/><text x="348" y="105" font-size="9" font-weight="700" fill="#E85002" text-anchor="middle">19:00</text><rect x="56" y="138" width="116" height="72" rx="10" fill="#17191E"/><circle cx="114" cy="174" r="14" fill="#FFFFFF"/><path d="M110.5 168.5L120 174L110.5 179.5Z" fill="#17191E"/><rect x="182" y="138" width="116" height="72" rx="10" fill="#F6B48A"/><circle cx="240" cy="174" r="14" fill="#FFFFFF"/><path d="M236.5 168.5L246 174L236.5 179.5Z" fill="#E85002"/><rect x="308" y="138" width="116" height="72" rx="10" fill="#FCEBDF"/><circle cx="366" cy="174" r="14" fill="#FFFFFF"/><path d="M362.5 168.5L372 174L362.5 179.5Z" fill="#E85002"/><rect x="182" y="218" width="54" height="7" rx="3.5" fill="#17191E"/><rect x="308" y="218" width="54" height="7" rx="3.5" fill="#17191E"/><text x="182" y="254" font-size="8.5" font-weight="600" fill="#858891" text-anchor="start">PATROCÍNIO</text><rect x="246" y="241" width="58" height="18" rx="9" fill="#FAF8F5" stroke="#E2DDD5" stroke-width="1.2"/><circle cx="258" cy="250" r="4" fill="#E85002"/><rect x="266" y="247.500" width="28" height="5" rx="2.5" fill="#17191E"/><rect x="312" y="241" width="58" height="18" rx="9" fill="#FAF8F5" stroke="#E2DDD5" stroke-width="1.2"/><circle cx="324" cy="250" r="4" fill="#17191E"/><rect x="332" y="247.500" width="28" height="5" rx="2.5" fill="#858891"/><rect x="412" y="92" width="104" height="196" rx="22" fill="#17191E" opacity=".10"/><rect x="406" y="80" width="104" height="200" rx="22" fill="#17191E"/><rect x="412" y="86" width="92" height="188" rx="17" fill="#FFFFFF"/><path d="M412 103a17 17 0 0 1 17-17h58a17 17 0 0 1 17 17v75h-92z" fill="#E85002"/><rect x="420" y="94" width="50" height="14" rx="7" fill="#FFFFFF"/><text x="445" y="104" font-size="6.5" font-weight="700" fill="#17191E" text-anchor="middle">SUA ARENA</text><circle cx="458" cy="142" r="18" fill="#FFFFFF"/><path d="M453.5 135.5L465 142L453.5 148.5Z" fill="#17191E"/><rect x="422" y="190" width="56" height="7" rx="3.5" fill="#17191E"/><rect x="422" y="203" width="38" height="5" rx="2.5" fill="#E2DDD5"/><rect x="422" y="222" width="72" height="24" rx="12" fill="#17191E"/><text x="458" y="238" font-size="9" font-weight="600" fill="#FFFFFF" text-anchor="middle">Baixar</text><rect x="442" y="262" width="32" height="4" rx="2" fill="#E2DDD5"/><rect x="13" y="205" width="146" height="38" rx="19" fill="#17191E" opacity=".09"/><rect x="10" y="198" width="146" height="38" rx="19" fill="#17191E"/><circle cx="31" cy="217" r="7" fill="#E85002"/><circle cx="47" cy="217" r="7" fill="#F6B48A"/><circle cx="63" cy="217" r="7" fill="#FFFFFF"/><text x="79" y="221.5" font-size="12" font-weight="600" fill="#FFFFFF" text-anchor="start">Suas cores</text><path d="M490 33V47M483 40H497" stroke="#E85002" stroke-width="3" stroke-linecap="round"/><path d="M22 115V125M17 120H27" stroke="#E85002" stroke-width="3" stroke-linecap="round"/></svg></div>
+        </article>
+        <article class="card small" data-reveal>
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></span>
+          <div><h3>Site com o seu nome</h3><p>Quem abre o vídeo vê a sua arena, do começo ao fim.</p></div>
+        </article>
+        <article class="card small" data-reveal>
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
+          <div><h3>Nada para baixar</h3><p>O jogador abre o link no celular e baixa. Funciona até para quem não gosta de aplicativo.</p></div>
+        </article>
+        <article class="card small tinted" data-reveal>
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg></span>
+          <div><h3>Vídeo sem a marca da Aatlas</h3><p>Em cada story vai só a sua marca e a dos seus patrocinadores.</p></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="como-funciona" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head split" data-reveal>
+        <div style="display:grid;gap:16px"><span class="mono eyebrow">Como funciona</span>
+        <h2 class="h2">Um botão, uma câmera e o site da sua arena.</h2></div>
+        <p class="lead">Tudo acontece sozinho. Ninguém da equipe precisa filmar ou mandar vídeo.</p>
+      </div>
+      <div class="how">
+        <figure class="scene" data-reveal style="margin:0">
+          <div class="art"><div class="reel" role="group" aria-label="O botão de replay em esportes diferentes" tabindex="0"><img src="assets/p-skate.webp" alt="Skatista comemorando a manobra enquanto a amiga aperta o botão de replay na pista" width="1000" height="726" loading="lazy" decoding="async" draggable="false"><img src="assets/p-luta.webp" alt="Lutador comemorando ao apertar o botão de replay no tatame" width="900" height="622" loading="lazy" decoding="async" draggable="false"><img src="assets/p-quadra.webp" alt="Jogador apertando o botão de replay na quadra de beach tennis enquanto a parceira comemora o ponto" width="1000" height="737" loading="lazy" decoding="async" draggable="false"></div><svg viewBox="0 0 460 320" role="img" aria-label="Coluna com o botão de replay no canto da quadra e a câmera gravando" xmlns="http://www.w3.org/2000/svg"><path d="M132 78L300 288H128Z" fill="#E85002" opacity=".10"/><rect x="28" y="286" width="404" height="4" rx="2" fill="#E2DDD5"/><rect x="66" y="64" width="9" height="224" rx="4.5" fill="#17191E"/><rect x="50" y="282" width="41" height="10" rx="5" fill="#17191E"/><g transform="translate(104 72) rotate(14)"><rect x="-30" y="-16" width="62" height="32" rx="10" fill="#17191E"/><rect x="28" y="-9" width="12" height="18" rx="4" fill="#3A3E47"/><circle cx="-16" cy="-4" r="3.6" fill="#FF5A4D"/></g><ellipse cx="214" cy="287" rx="20" ry="4" fill="#17191E" opacity=".12"/><circle cx="214" cy="268" r="17" fill="#E85002"/><path d="M200.4 260.4Q214 269.7 227.6 260.4M200.4 276.5Q214 267.1 227.6 276.5" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" opacity=".85"/><rect x="318" y="278" width="76" height="14" rx="7" fill="#17191E"/><rect x="334" y="104" width="44" height="180" rx="10" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="2"/><rect x="322" y="62" width="68" height="46" rx="14" fill="#E85002"/><path d="M350.8 79.0L361.8 85L350.8 91.0Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="2.4" stroke-linejoin="round"/><circle cx="356" cy="170" r="34" fill="#E85002" opacity=".10"/><circle cx="356" cy="170" r="25" fill="#E85002" opacity=".16"/><rect x="340" y="142" width="32" height="64" rx="11" fill="#17191E"/><circle cx="356" cy="166" r="11" fill="#E85002"/><circle cx="356" cy="166" r="11" fill="none" stroke="#FFFFFF" stroke-width="2.2" opacity=".85"/><rect x="349" y="188" width="14" height="4" rx="2" fill="#3A3E47"/><rect x="217" y="157" width="98" height="34" rx="17.0" fill="#17191E" opacity=".09"/><rect x="214" y="150" width="104" height="34" rx="17.0" fill="#17191E"/><path d="M314 160l10 7-10 7z" fill="#17191E"/><text x="266" y="171.5" font-size="12.5" font-weight="600" fill="#FFFFFF" text-anchor="middle">Aperte aqui</text><path d="M322 84C296 84 300 62 276 62" fill="none" stroke="#E85002" stroke-width="2.6" stroke-dasharray="1 8" stroke-linecap="round"/><rect x="170" y="36" width="102" height="72" rx="14" fill="#17191E" opacity=".09"/><rect x="166" y="26" width="110" height="72" rx="14" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.5"/><rect x="174" y="34" width="94" height="40" rx="8" fill="#FCEBDF"/><circle cx="221" cy="54" r="12" fill="#E85002"/><path d="M218.7 50.7L224.7 54L218.7 57.3Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1.3" stroke-linejoin="round"/><rect x="174" y="82" width="46" height="6" rx="3" fill="#17191E"/><text x="268" y="89" font-size="9" font-weight="600" fill="#858891" text-anchor="end">10 s</text><path d="M416 51V65M409 58H423" stroke="#E85002" stroke-width="3" stroke-linecap="round"/><path d="M140 191V201M135 196H145" stroke="#E85002" stroke-width="3" stroke-linecap="round"/></svg></div>
+          <figcaption class="tagline"><span class="dot"></span>O botão fica numa coluna, no canto da quadra</figcaption>
+        </figure>
+        <ol class="steps">
+          <li class="step" data-reveal><span class="n"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 20V4L8 9"/></svg></span><div><h3>Grava</h3><p>Uma câmera acompanha a quadra o tempo todo.</p></div></li>
+          <li class="step on" data-reveal><span class="n"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 8a4 4 0 1 1 8 0c0 1.098-.564 2.025-1.159 2.815L8 20h8"/></svg></span><div><h3>Marca</h3><p>Fez o ponto? O jogador aperta o botão.</p></div></li>
+          <li class="step" data-reveal><span class="n"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a4 4 0 1 0-4-4m0 8a4 4 0 1 0 4-4"/></svg></span><div><h3>Sobe</h3><p>Em cerca de 10 segundos, o lance está no site.</p></div></li>
+          <li class="step" data-reveal><span class="n"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 20V5L7 16h10"/></svg></span><div><h3>Baixa</h3><p>O jogador lê o QR code da placa da quadra, acha o lance pelo horário e posta.</p></div></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="para-a-arena" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head split" data-reveal>
+        <div style="display:grid;gap:16px"><span class="mono eyebrow">Para a arena</span>
+        <h2 class="h2">O jogador leva o vídeo. <span class="it">A arena leva a vitrine.</span></h2></div>
+        <p class="lead">Cada vídeo sai com o logo da arena e dos patrocinadores.</p>
+      </div>
+      <div class="arena">
+        <article class="card calc" data-reveal>
+          <div class="head">
+            <div><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg></span>
+            <h3>Uma cota de patrocínio nova</h3><p>O logo do patrocinador aparece em todo vídeo. Você define o valor.</p></div>
+            <div class="art"><img src="assets/p-dono.webp" alt="Dono da arena feliz, apontando para a receita de patrocínio" width="520" height="869" loading="lazy" decoding="async"><svg viewBox="0 0 300 280" role="img" aria-label="Gráfico de receita de patrocínio crescendo mês a mês" xmlns="http://www.w3.org/2000/svg"><rect x="44" y="188" width="44" height="60" rx="10" fill="#FCEBDF"/><rect x="100" y="150" width="44" height="98" rx="10" fill="#F6B48A"/><rect x="156" y="108" width="44" height="140" rx="10" fill="#EE7A35"/><rect x="212" y="62" width="44" height="186" rx="10" fill="#E85002"/><rect x="30" y="246" width="240" height="6" rx="3" fill="#17191E"/><path d="M52 158L116 118L176 76L238 26" fill="none" stroke="#17191E" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M212 24L240 24L236 52" fill="none" stroke="#17191E" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="74" cy="66" r="36" fill="#17191E" opacity=".08" transform="translate(3 8)"/><circle cx="74" cy="66" r="36" fill="#E85002"/><circle cx="74" cy="66" r="27" fill="none" stroke="#FFFFFF" stroke-width="2.4" opacity=".55"/><text x="74" y="74" font-size="22" font-weight="700" fill="#FFFFFF" text-anchor="middle">R$</text></svg></div>
+          </div>
+          <div class="fields">
+            <div class="field"><label for="p">Patrocinadores no vídeo <output id="po">2</output></label><input id="p" type="range" min="1" max="6" value="2"></div>
+            <div class="field"><label for="v">Valor mensal da cota <output id="vo">R$ 300</output></label><input id="v" type="range" min="100" max="1500" step="50" value="300"></div>
+          </div>
+          <div class="result" aria-live="polite">
+            <div><b id="rm">R$ 600</b><span>por mês</span></div>
+            <div><b id="ra">R$ 7.200</b><span>em 12 meses</span></div>
+          </div>
+          <p class="note">Simulação com valores de exemplo. O preço da cota é você quem combina.</p>
+        </article>
+        <article class="card story" data-reveal>
+          <div><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg></span>
+          <h3>Sua marca em cada story</h3><p>Quem posta o lance mostra para os amigos onde jogou.</p></div>
+          <img class="phone" src="assets/p-story.webp" alt="Celular com o lance postado no story, com o selo da arena e do patrocinador" width="520" height="1001" loading="lazy" decoding="async">
+        </article>
+        <div class="trio">
+          <article class="card" data-reveal><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg></span><h3>Motivo pra voltar</h3><p>Quem posta quer jogar de novo. Quem vê quer saber onde foi.</p></article>
+          <article class="card" data-reveal><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span><h3>Zero trabalho no balcão</h3><p>O sistema grava, publica e apaga os vídeos antigos sozinho.</p></article>
+          <article class="card" data-reveal><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg></span><h3>Sem aplicativo</h3><p>O jogador abre o link no celular e baixa. Simples assim.</p></article>
+          <article class="card wide" data-reveal><div><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17 2-5 5-5-5"/><rect width="20" height="15" x="2" y="7" rx="2"/></svg></span><h3>Lances na TV da arena</h3><p>Os vídeos do dia passando na tela do bar e da recepção. Quem está esperando a quadra vê e quer jogar.</p></div>
+            <svg viewBox="0 0 220 160" role="img" aria-label="TV da arena passando os lances do dia" xmlns="http://www.w3.org/2000/svg"><rect x="16" y="20" width="194" height="112" rx="14" fill="#17191E" opacity=".09"/><rect x="100" y="122" width="14" height="16" fill="#17191E"/><rect x="70" y="136" width="74" height="8" rx="4" fill="#17191E"/><rect x="10" y="10" width="194" height="114" rx="14" fill="#17191E"/><rect x="18" y="18" width="178" height="98" rx="8" fill="#E85002"/><rect x="40" y="46" width="134" height="52" rx="3" fill="none" stroke="#FFFFFF" stroke-width="2" opacity=".45"/><path d="M107 46V98" stroke="#FFFFFF" stroke-width="1.6" opacity=".5"/><circle cx="107" cy="72" r="17" fill="#FFFFFF"/><path d="M102.5 65.5L114 72L102.5 78.500Z" fill="#17191E"/><rect x="26" y="24" width="96" height="16" rx="8" fill="#FFFFFF"/><circle cx="35" cy="32" r="3" fill="#E5484D"/><text x="42" y="35" font-size="8" font-weight="700" fill="#17191E" text-anchor="start">LANCES DE HOJE</text><rect x="30" y="106" width="154" height="4" rx="2" fill="#FFFFFF" opacity=".4"/><rect x="30" y="106" width="70" height="4" rx="2" fill="#FFFFFF"/></svg></article>
+          <article class="card wide" data-reveal><div><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></span><h3>Relatório para o patrocinador</h3><p>Vídeos gerados e baixados no mês, por quadra. É o número que mostra o que a cota entrega.</p></div>
+            <svg viewBox="0 0 220 160" role="img" aria-label="Relatório mensal com os vídeos gerados por quadra" xmlns="http://www.w3.org/2000/svg"><rect x="36" y="18" width="150" height="136" rx="14" fill="#17191E" opacity=".09"/><rect x="30" y="8" width="150" height="140" rx="14" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.5"/><rect x="44" y="22" width="60" height="8" rx="4" fill="#17191E"/><rect x="44" y="36" width="38" height="6" rx="3" fill="#E2DDD5"/><rect x="46" y="96" width="22" height="28" rx="6" fill="#FCEBDF"/><rect x="76" y="80" width="22" height="44" rx="6" fill="#F6B48A"/><rect x="106" y="66" width="22" height="58" rx="6" fill="#EE7A35"/><rect x="136" y="52" width="22" height="72" rx="6" fill="#E85002"/><rect x="40" y="123" width="130" height="4" rx="2" fill="#17191E"/><text x="57" y="140" font-size="8" font-weight="600" fill="#858891" text-anchor="middle">Q1</text><text x="87" y="140" font-size="8" font-weight="600" fill="#858891" text-anchor="middle">Q2</text><text x="117" y="140" font-size="8" font-weight="600" fill="#858891" text-anchor="middle">Q3</text><text x="147" y="140" font-size="8" font-weight="600" fill="#858891" text-anchor="middle">Q4</text><circle cx="184" cy="32" r="20" fill="#17191E"/><path d="M184 23v14M178 32l6 6 6-6" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="painel" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head split" data-reveal>
+        <div style="display:grid;gap:16px"><span class="mono eyebrow">Painel do dono</span>
+        <h2 class="h2">Todos os números da sua quadra. <span class="it">Numa tela só.</span></h2></div>
+        <p class="lead">Você abre o painel e vê o que cada quadra gerou, sem pedir relatório para ninguém.</p>
+      </div>
+      <div class="how">
+        <figure class="scene" data-reveal style="margin:0">
+          <div class="art"><svg viewBox="0 0 460 320" role="img" aria-label="Painel do dono da arena com lances gerados, vídeos baixados, horários de pico e desempenho por quadra" xmlns="http://www.w3.org/2000/svg"><rect x="16" y="24" width="436" height="288" rx="20" fill="#17191E" opacity=".09"/><rect x="10" y="12" width="436" height="290" rx="20" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.5"/><path d="M10 32a20 20 0 0 1 20-20h44v290H30a20 20 0 0 1-20-20z" fill="#17191E"/><rect x="30" y="30" width="24" height="24" rx="7" fill="#E85002"/><rect x="28" y="74" width="28" height="28" rx="8" fill="#FFFFFF" opacity=".16"/><path d="M36 94v-6M42 94v-12M48 94v-9" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"/><rect x="34" y="122" width="16" height="16" rx="5" fill="#FFFFFF" opacity=".28"/><rect x="34" y="154" width="16" height="16" rx="5" fill="#FFFFFF" opacity=".28"/><rect x="34" y="186" width="16" height="16" rx="5" fill="#FFFFFF" opacity=".28"/><text x="92" y="42" font-size="14" font-weight="700" fill="#17191E" text-anchor="start">Sua Arena</text><text x="92" y="57" font-size="9.5" font-weight="500" fill="#858891" text-anchor="start">Painel · 4 quadras</text><rect x="356" y="28" width="74" height="24" rx="12" fill="#FCEBDF"/><text x="393" y="44" font-size="9.5" font-weight="700" fill="#C94400" text-anchor="middle">ESTE MÊS</text><rect x="92" y="70" width="106" height="58" rx="12" fill="#E85002"/><text x="104" y="89" font-size="8.5" font-weight="600" fill="#FFFFFF" opacity=".85" text-anchor="start">LANCES GERADOS</text><text x="104" y="116" font-size="22" font-weight="700" fill="#FFFFFF" text-anchor="start">1.248</text><rect x="206" y="70" width="106" height="58" rx="12" fill="#FAF8F5" stroke="#E2DDD5" stroke-width="1.2"/><text x="218" y="89" font-size="8.5" font-weight="600" fill="#858891" text-anchor="start">VÍDEOS BAIXADOS</text><text x="218" y="116" font-size="22" font-weight="700" fill="#17191E" text-anchor="start">936</text><rect x="320" y="70" width="110" height="58" rx="12" fill="#FAF8F5" stroke="#E2DDD5" stroke-width="1.2"/><text x="332" y="89" font-size="8.5" font-weight="600" fill="#858891" text-anchor="start">LOGOS EXIBIDOS</text><text x="332" y="116" font-size="22" font-weight="700" fill="#17191E" text-anchor="start">2.496</text><rect x="92" y="140" width="208" height="148" rx="12" fill="#FAF8F5" stroke="#E2DDD5" stroke-width="1.2"/><text x="104" y="160" font-size="9.5" font-weight="700" fill="#17191E" text-anchor="start">Horários de pico</text><rect x="106" y="244" width="14" height="18" rx="5" fill="#FCEBDF"/><rect x="129" y="236" width="14" height="26" rx="5" fill="#FCEBDF"/><rect x="152" y="228" width="14" height="34" rx="5" fill="#F6B48A"/><rect x="175" y="214" width="14" height="48" rx="5" fill="#F6B48A"/><rect x="198" y="192" width="14" height="70" rx="5" fill="#EE7A35"/><rect x="221" y="174" width="14" height="88" rx="5" fill="#E85002"/><rect x="244" y="200" width="14" height="62" rx="5" fill="#EE7A35"/><rect x="267" y="226" width="14" height="36" rx="5" fill="#F6B48A"/><rect x="102" y="261" width="186" height="3" rx="1.500" fill="#17191E"/><text x="113" y="278" font-size="8" font-weight="600" fill="#858891" text-anchor="middle">8h</text><text x="182" y="278" font-size="8" font-weight="600" fill="#858891" text-anchor="middle">14h</text><text x="228" y="278" font-size="8" font-weight="700" fill="#E85002" text-anchor="middle">20h</text><text x="274" y="278" font-size="8" font-weight="600" fill="#858891" text-anchor="middle">22h</text><rect x="310" y="140" width="120" height="148" rx="12" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.2"/><text x="322" y="160" font-size="9.5" font-weight="700" fill="#17191E" text-anchor="start">Por quadra</text><text x="322" y="180" font-size="8.5" font-weight="500" fill="#555961" text-anchor="start">Quadra 1</text><rect x="322" y="185" width="96" height="6" rx="3" fill="#F1EDE6"/><rect x="322" y="185" width="84" height="6" rx="3" fill="#E85002"/><text x="322" y="206" font-size="8.5" font-weight="500" fill="#555961" text-anchor="start">Quadra 2</text><rect x="322" y="211" width="96" height="6" rx="3" fill="#F1EDE6"/><rect x="322" y="211" width="64" height="6" rx="3" fill="#EE7A35"/><text x="322" y="232" font-size="8.5" font-weight="500" fill="#555961" text-anchor="start">Quadra 3</text><rect x="322" y="237" width="96" height="6" rx="3" fill="#F1EDE6"/><rect x="322" y="237" width="48" height="6" rx="3" fill="#F6B48A"/><text x="322" y="258" font-size="8.5" font-weight="500" fill="#555961" text-anchor="start">Quadra 4</text><rect x="322" y="263" width="96" height="6" rx="3" fill="#F1EDE6"/><rect x="322" y="263" width="30" height="6" rx="3" fill="#F6B48A"/><rect x="313" y="289" width="140" height="30" rx="15" fill="#17191E" opacity=".09"/><rect x="310" y="282" width="140" height="30" rx="15" fill="#17191E"/><circle cx="327" cy="297" r="5" fill="#30A46C"/><text x="338" y="301" font-size="10.5" font-weight="600" fill="#FFFFFF" text-anchor="start">4 quadras gravando</text></svg></div>
+          <figcaption class="tagline"><span class="dot"></span>Tela de exemplo, com números ilustrativos</figcaption>
+        </figure>
+        <ul class="steps">
+          <li class="drow" data-reveal><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg></span><div><h3>Lances gerados</h3><p>Quantos replays cada quadra gerou no dia, na semana e no mês.</p></div></li>
+          <li class="drow" data-reveal><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg></span><div><h3>Vídeos baixados</h3><p>Quantos lances os jogadores abriram e levaram para o celular.</p></div></li>
+          <li class="drow" data-reveal><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 14v2.2l1.6 1"/><path d="M16 2v3"/><path d="M21 7.338V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h2.338"/><path d="M3 9h5.859"/><path d="M8 2v3"/><circle cx="16" cy="16" r="6"/></svg></span><div><h3>Horários de pico</h3><p>Em que dia e em que horário a quadra mais gera lance.</p></div></li>
+          <li class="drow" data-reveal><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg></span><div><h3>Quadra por quadra</h3><p>Compare as quadras e veja qual movimenta mais.</p></div></li>
+          <li class="drow" data-reveal><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 6a13 13 0 0 0 8.4-2.8A1 1 0 0 1 21 4v12a1 1 0 0 1-1.6.8A13 13 0 0 0 11 14H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/><path d="M6 14a12 12 0 0 0 2.4 7.2 2 2 0 0 0 3.2-2.4A8 8 0 0 1 10 14"/><path d="M8 6v8"/></svg></span><div><h3>Exposição do patrocinador</h3><p>Quantas vezes cada logo saiu em vídeo. É o número que sustenta a cota.</p></div></li>
+          <li class="drow" data-reveal><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg></span><div><h3>Câmeras e botões</h3><p>Veja se cada quadra está gravando normalmente.</p></div></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="entrega" style="padding-top:0">
+    <div class="wrap">
+      <div class="deliver">
+        <aside class="side">
+          <div style="display:grid;gap:16px" data-reveal><span class="mono eyebrow">O que a Aatlas entrega</span>
+          <h2 class="h2" style="font-size:clamp(30px,4vw,44px)">Você recebe o replay funcionando.</h2>
+          <p class="lead">Não precisa entender nada de tecnologia. A gente cuida de tudo.</p>
+          <div class="art"><img src="assets/p-entrega.webp" alt="Jogador na quadra vendo e baixando o replay do lance no celular" width="900" height="654" loading="lazy" decoding="async"></div></div>
+        </aside>
+        <div class="dgrid">
+          <div class="drow" data-reveal><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></span><div><h3>Visita técnica</h3><p>Olhamos câmera, luz e internet de cada quadra.</p></div></div>
+          <div class="drow" data-reveal><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"/></svg></span><div><h3>Instalação e testes</h3><p>Câmeras e botões prontos, aproveitando o que você já tem.</p></div></div>
+          <div class="drow" data-reveal><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/></svg></span><div><h3>Site com a sua marca</h3><p>Nome, cores e endereço próprio da arena.</p></div></div>
+          <div class="drow" data-reveal><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg></span><div><h3>Logos no vídeo</h3><p>Da arena e dos patrocinadores, trocados quando quiser.</p></div></div>
+          <div class="drow" data-reveal><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span><div><h3>Limpeza automática</h3><p>Os vídeos saem do ar no prazo que você escolher.</p></div></div>
+          <div class="drow" data-reveal><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Zm0 0a9 9 0 1 1 18 0m0 0v5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3Z"/><path d="M21 16v2a4 4 0 0 1-4 4h-5"/></svg></span><div><h3>Suporte</h3><p>Parou alguma coisa, a gente resolve com você.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="planos" style="padding-top:0">
+    <div class="wrap">
+      <div class="price-head">
+        <div><span class="mono eyebrow">Investimento</span>
+        <h2 class="h2" data-cut>Dois jeitos de começar. <span class="it">Um deles cabe na sua arena.</span></h2>
+        <p class="lead" data-reveal="blur">Compra ou comodato. Os valores dependem do número de quadras e vêm por escrito depois da visita técnica.</p></div>
+        <svg viewBox="0 0 260 120" role="img" aria-label="Equipamento do replay: câmera, botão, computador e placa com QR code" xmlns="http://www.w3.org/2000/svg"><rect x="14" y="100" width="232" height="5" rx="2.5" fill="#17191E"/><rect x="42" y="80" width="6" height="20" fill="#17191E"/><g transform="translate(46 68) rotate(-8)"><rect x="-26" y="-14" width="48" height="28" rx="9" fill="#17191E"/><rect x="20" y="-8" width="10" height="16" rx="4" fill="#3A3E47"/><circle cx="-14" cy="-4" r="3.2" fill="#FF5A4D"/></g><rect x="92" y="44" width="32" height="56" rx="11" fill="#17191E"/><circle cx="108" cy="66" r="10" fill="#E85002"/><circle cx="108" cy="66" r="10" fill="none" stroke="#FFFFFF" stroke-width="2" opacity=".85"/><rect x="101" y="84" width="14" height="4" rx="2" fill="#3A3E47"/><rect x="140" y="62" width="50" height="38" rx="8" fill="#FFFFFF" stroke="#17191E" stroke-width="2.5"/><circle cx="152" cy="74" r="3" fill="#30A46C"/><path d="M150 88h30" stroke="#E2DDD5" stroke-width="3" stroke-linecap="round"/><rect x="223" y="82" width="6" height="18" fill="#17191E"/><rect x="206" y="34" width="40" height="50" rx="8" fill="#E85002"/><rect x="214" y="42" width="24" height="24" rx="3" fill="#FFFFFF"/><path d="M218 46h6v6h-6zM228 46h6v6h-6zM218 56h6v6h-6zM229 57h4v4h-4z" fill="#17191E"/><rect x="216" y="72" width="20" height="4" rx="2" fill="#FFFFFF" opacity=".8"/></svg>
+      </div>
+      <div class="plans">
+        <article class="plan" data-reveal="blur">
+          <header><div class="plan-top"><h3>Compra</h3></div>
+          <p>Você compra o equipamento por fora, do fornecedor que preferir, e paga a implantação e uma mensalidade por quadra.</p>
+          <div class="term"><b>12</b><span>meses de contrato</span></div></header>
+          <div class="acts"><a class="pbtn dark cta-link" href="https://wa.me/5541998145475" target="_blank" rel="noopener">Pedir proposta</a><a class="pbtn ghost" href="#duvidas">Tirar dúvidas</a></div>
+          <div class="feat"><span class="mono">Como funciona</span><h4>Na compra:</h4>
+            <ul class="checks"><li>Equipamento comprado por você, fora do plano</li><li>Nós indicamos o que comprar</li><li>Aproveita a câmera que você já tem, se ela servir</li><li>Implantação paga uma vez só</li></ul></div>
+        </article>
+        <article class="plan hot" data-reveal="blur">
+          <header><div class="plan-top"><h3>Comodato</h3><span class="badge">Entrada menor</span></div>
+          <p>O custo do equipamento já vem no plano, diluído na mensalidade por quadra. Você não compra nada à parte.</p>
+          <div class="term"><b>24</b><span>meses de contrato</span></div></header>
+          <div class="acts"><a class="pbtn hot cta-link" href="https://wa.me/5541998145475" target="_blank" rel="noopener">Pedir proposta</a><a class="pbtn ghost" href="#duvidas">Tirar dúvidas</a></div>
+          <div class="feat"><span class="mono">Como funciona</span><h4>No comodato:</h4>
+            <ul class="checks"><li>Câmera, botão e computador inclusos</li><li>Custo diluído nos 24 meses</li><li>Entrada menor para começar</li><li>Para quem não quer comprar equipamento agora</li></ul></div>
+        </article>
+        <article class="plan" data-reveal="blur">
+          <header><div class="plan-top"><h3>Nos dois planos</h3></div>
+          <p>O que a arena recebe, seja qual for o jeito de começar.</p>
+          <div class="term"><b>Por escrito</b><span>depois da visita técnica</span></div></header>
+          <div class="acts"><a class="pbtn dark cta-link" href="https://wa.me/5541998145475" target="_blank" rel="noopener">Agendar visita técnica</a><a class="pbtn ghost" href="#duvidas">Tirar dúvidas</a></div>
+          <div class="feat"><span class="mono">Como funciona</span><h4>Sempre incluso:</h4>
+            <ul class="checks"><li>Site com a marca da arena</li><li>Logos da arena e dos patrocinadores</li><li>Painel com os números de cada quadra</li><li>Lances na TV da arena</li><li>Limpeza automática dos vídeos</li><li>Suporte e atualizações</li></ul></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="evolucao" style="padding-top:0">
+    <div class="wrap">
+      <div class="card band" data-reveal>
+        <div class="bhead">
+          <div><span class="mono eyebrow">Sempre atualizado</span>
+          <h2 class="h2">Uma tecnologia que <span class="it">não para de evoluir.</span></h2>
+          <p class="lead">O sistema recebe atualizações pela internet. Recursos novos chegam para a sua arena sem obra e sem trocar o que já foi instalado.</p>
+          <div class="chips"><span class="chip"><span class="dot"></span>Replay em 10 s</span><span class="chip"><span class="dot"></span>TV da arena</span><span class="chip"><span class="dot"></span>Relatório mensal</span></div></div>
+          <div class="art"><svg viewBox="0 0 460 280" role="img" aria-label="Atualizações chegando pela internet para a câmera, o site e a TV da arena" xmlns="http://www.w3.org/2000/svg"><path d="M200 96C200 126 90 114 90 148M230 96V148M260 96C260 126 370 114 370 148" fill="none" stroke="#E85002" stroke-width="2.6" stroke-dasharray="1 8" stroke-linecap="round"/><path d="M172 94a28 28 0 0 1 6-55a38 38 0 0 1 72-8a32 32 0 0 1 36 63z" fill="#17191E" opacity=".09" transform="translate(4 9)"/><path d="M172 94a28 28 0 0 1 6-55a38 38 0 0 1 72-8a32 32 0 0 1 36 63z" fill="#17191E"/><path d="M215 60a16 16 0 0 1 28-8M245 66a16 16 0 0 1-28 8" fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round"/><path d="M244 42v10h-10M216 84V74h10" fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><rect x="302" y="21" width="150" height="34" rx="17" fill="#17191E" opacity=".09"/><rect x="298" y="14" width="150" height="34" rx="17" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.5"/><circle cx="316" cy="31" r="5" fill="#30A46C"/><text x="328" y="35.500" font-size="11.5" font-weight="600" fill="#17191E" text-anchor="start">Atualização no ar</text><rect x="34" y="160" width="120" height="100" rx="18" fill="#17191E" opacity=".09"/><rect x="30" y="150" width="120" height="100" rx="18" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.5"/><g transform="translate(90 190)"><rect x="-26" y="-14" width="46" height="28" rx="9" fill="#17191E"/><rect x="18" y="-8" width="10" height="16" rx="4" fill="#3A3E47"/><circle cx="-14" cy="-4" r="3.2" fill="#FF5A4D"/></g><text x="90" y="234" font-size="12" font-weight="600" fill="#17191E" text-anchor="middle">Câmera</text><rect x="174" y="160" width="120" height="100" rx="18" fill="#17191E" opacity=".09"/><rect x="170" y="150" width="120" height="100" rx="18" fill="#E85002"/><circle cx="230" cy="190" r="17" fill="#FFFFFF"/><path d="M225.500 183.500L237 190L225.500 196.500Z" fill="#17191E"/><text x="230" y="234" font-size="12" font-weight="600" fill="#FFFFFF" text-anchor="middle">Site da arena</text><rect x="314" y="160" width="120" height="100" rx="18" fill="#17191E" opacity=".09"/><rect x="310" y="150" width="120" height="100" rx="18" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.5"/><rect x="342" y="170" width="56" height="34" rx="6" fill="#17191E"/><rect x="346" y="174" width="48" height="26" rx="3" fill="#E85002"/><path d="M366.500 182.500L375 187L366.500 191.500Z" fill="#FFFFFF"/><rect x="367" y="204" width="6" height="6" fill="#17191E"/><rect x="356" y="209" width="28" height="4" rx="2" fill="#17191E"/><text x="370" y="234" font-size="12" font-weight="600" fill="#17191E" text-anchor="middle">TV da arena</text><rect x="388" y="138" width="52" height="24" rx="12" fill="#17191E"/><text x="414" y="154" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">NOVO</text><path d="M60 53V67M53 60H67" stroke="#E85002" stroke-width="3" stroke-linecap="round"/><path d="M130 111V121M125 116H135" stroke="#E85002" stroke-width="3" stroke-linecap="round"/></svg></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="privacidade" style="padding-top:0">
+    <div class="wrap">
+      <div class="card band" data-reveal>
+        <div class="bhead">
+          <div><span class="mono eyebrow">Privacidade</span>
+          <h2 class="h2">Vídeo só para <span class="it">quem estava lá.</span></h2>
+          <p class="lead">Código na placa, prazo para sair do ar e aviso de gravação: três cuidados que já vêm no pacote.</p></div>
+          <div class="art"><svg viewBox="0 0 360 260" role="img" aria-label="Placa da quadra com QR code e código de acesso, aviso de gravação e prazo para o vídeo sair do ar" xmlns="http://www.w3.org/2000/svg"><rect x="174" y="196" width="12" height="52" fill="#17191E"/><rect x="140" y="244" width="80" height="8" rx="4" fill="#17191E"/><rect x="96" y="30" width="180" height="178" rx="20" fill="#17191E" opacity=".09"/><rect x="90" y="18" width="180" height="182" rx="20" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.5"/><path d="M90 38a20 20 0 0 1 20-20h140a20 20 0 0 1 20 20v14H90z" fill="#E85002"/><text x="180" y="40" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle">QUADRA 2 · REPLAY</text><rect x="130" y="62" width="28" height="28" rx="5" fill="#17191E"/><rect x="136" y="68" width="16" height="16" rx="2" fill="#FFFFFF"/><rect x="140" y="72" width="8" height="8" fill="#17191E"/><rect x="202" y="62" width="28" height="28" rx="5" fill="#17191E"/><rect x="208" y="68" width="16" height="16" rx="2" fill="#FFFFFF"/><rect x="212" y="72" width="8" height="8" fill="#17191E"/><rect x="130" y="134" width="28" height="28" rx="5" fill="#17191E"/><rect x="136" y="140" width="16" height="16" rx="2" fill="#FFFFFF"/><rect x="140" y="144" width="8" height="8" fill="#17191E"/><path d="M166 62h8v8h-8zM182 62h8v8h-8zM174 70h8v8h-8zM166 78h8v8h-8zM190 78h8v8h-8zM182 86h8v8h-8zM130 98h8v8h-8zM146 98h8v8h-8zM162 98h8v8h-8zM202 98h8v8h-8zM222 98h8v8h-8zM138 106h8v8h-8zM154 106h8v8h-8zM214 106h8v8h-8zM130 114h8v8h-8zM154 114h8v8h-8zM206 114h8v8h-8zM222 114h8v8h-8zM146 122h8v8h-8zM198 122h8v8h-8zM214 122h8v8h-8zM166 134h8v8h-8zM182 134h8v8h-8zM206 134h8v8h-8zM222 134h8v8h-8zM174 142h8v8h-8zM198 142h8v8h-8zM214 142h8v8h-8zM166 154h8v8h-8zM190 154h8v8h-8zM206 154h8v8h-8zM222 154h8v8h-8z" fill="#17191E"/><rect x="165" y="97" width="30" height="30" rx="8" fill="#FFFFFF"/><rect x="169" y="101" width="22" height="22" rx="6" fill="#E85002"/><path d="M177 107.500L184.500 112L177 116.500Z" fill="#FFFFFF"/><rect x="118" y="170" width="124" height="22" rx="11" fill="#FCEBDF"/><text x="180" y="185" font-size="10.5" font-weight="700" fill="#C94400" text-anchor="middle">CÓDIGO Q2-4821</text><rect x="11" y="91" width="118" height="34" rx="17" fill="#17191E" opacity=".09"/><rect x="8" y="84" width="118" height="34" rx="17" fill="#17191E"/><circle cx="27" cy="101" r="5" fill="#E5484D"/><text x="39" y="105.500" font-size="11.5" font-weight="600" fill="#FFFFFF" text-anchor="start">Área gravada</text><rect x="237" y="139" width="120" height="36" rx="18" fill="#17191E" opacity=".09"/><rect x="234" y="132" width="120" height="36" rx="18" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.5"/><circle cx="254" cy="150" r="8" fill="none" stroke="#E85002" stroke-width="2.4"/><path d="M254 145.500V150l3 2" fill="none" stroke="#E85002" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><text x="268" y="154.500" font-size="11.5" font-weight="600" fill="#17191E" text-anchor="start">Some em 24 h</text><circle cx="290" cy="42" r="26" fill="#17191E"/><path d="M283.500 40v-5a6.500 6.500 0 0 1 13 0v5" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/><rect x="279" y="40" width="22" height="17" rx="4" fill="#FFFFFF"/><circle cx="290" cy="48.500" r="2.6" fill="#17191E"/><path d="M44 37V51M37 44H51" stroke="#E85002" stroke-width="3" stroke-linecap="round"/><path d="M322 209V219M317 214H327" stroke="#E85002" stroke-width="3" stroke-linecap="round"/></svg></div>
+        </div>
+        <div class="three">
+          <div class="drow"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg></span><div><h3>Código da quadra</h3><p>Os vídeos só abrem com o código impresso na placa da quadra.</p></div></div>
+          <div class="drow"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg></span><div><h3>Some sozinho</h3><p>Cada vídeo sai do ar no prazo que você escolher, a partir de 24 horas.</p></div></div>
+          <div class="drow"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.75 12h3.632a1 1 0 0 1 .894 1.447l-2.034 4.069a1 1 0 0 1-1.708.134l-2.124-2.97"/><path d="M17.106 9.053a1 1 0 0 1 .447 1.341l-3.106 6.211a1 1 0 0 1-1.342.447L3.61 12.3a2.92 2.92 0 0 1-1.3-3.91L3.69 5.6a2.92 2.92 0 0 1 3.92-1.3z"/><path d="M2 19h3.76a2 2 0 0 0 1.8-1.1L9 15"/><path d="M2 21v-4"/><path d="M7 9h.01"/></svg></span><div><h3>Aviso na quadra</h3><p>Entregamos a placa informando que existe gravação.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="implantacao" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head" data-reveal><span class="mono eyebrow">Implantação</span>
+        <h2 class="h2">Do primeiro contato ao primeiro lance.</h2></div>
+      <ol class="rail">
+        <li data-reveal><span class="n"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 20V4L8 9"/></svg></span><h3>Conversa</h3><p>Você conta quantas quadras e quais esportes.</p></li>
+        <li data-reveal><span class="n"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 8a4 4 0 1 1 8 0c0 1.098-.564 2.025-1.159 2.815L8 20h8"/></svg></span><h3>Visita técnica</h3><p>Conferimos câmera, luz e internet de cada quadra.</p></li>
+        <li data-reveal><span class="n"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a4 4 0 1 0-4-4m0 8a4 4 0 1 0 4-4"/></svg></span><h3>Proposta por escrito</h3><p>Compra ou comodato, com tudo o que está incluso.</p></li>
+        <li data-reveal><span class="n"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 20V5L7 16h10"/></svg></span><h3>Instalação e testes</h3><p>Câmera, botão, placa com QR code e o site da arena.</p></li>
+        <li data-reveal><span class="n"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 20h4a4 4 0 1 0 0-8H8V4h8"/></svg></span><h3>No ar</h3><p>Equipe orientada e o primeiro lance publicado.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="sec" id="duvidas" style="padding-top:0">
+    <div class="wrap faq">
+      <div class="contact" data-reveal>
+        <span class="mono eyebrow">Dúvidas</span>
+        <h2 class="h2">Antes de você perguntar.</h2>
+        <p class="lead">Não achou sua dúvida? Fale com a gente.</p>
+        <div><a class="btn btn-primary cta-link" href="https://wa.me/5541998145475" target="_blank" rel="noopener">Falar com a Aatlas</a></div>
+        <div class="art"><img src="assets/p-atende.webp" alt="Dono de arena sorrindo e convidando para conversar" width="560" height="931" loading="lazy" decoding="async"><svg viewBox="0 0 300 280" role="img" aria-label="Conversa por mensagem com o atendimento da Aatlas" xmlns="http://www.w3.org/2000/svg"><rect x="26" y="50" width="182" height="62" rx="22" fill="#17191E" opacity=".09"/><rect x="22" y="40" width="190" height="62" rx="22" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.5"/><text x="42" y="68" font-size="14" font-weight="600" fill="#17191E" text-anchor="start">Quero o replay</text><text x="42" y="87" font-size="14" font-weight="600" fill="#17191E" text-anchor="start">na minha arena</text><path d="M258 196v20l-22-18z" fill="#E85002"/><rect x="100" y="146" width="172" height="52" rx="22" fill="#17191E" opacity=".09"/><rect x="96" y="136" width="180" height="62" rx="22" fill="#E85002"/><text x="118" y="164" font-size="14" font-weight="600" fill="#FFFFFF" text-anchor="start">Pode falar!</text><text x="118" y="183" font-size="12" font-weight="500" fill="#FFFFFF" text-anchor="start">Agendo sua visita.</text><path d="M244 182l4 4 7-8M252 186l1 1 7-9" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/><rect x="26" y="224" width="78" height="44" rx="22" fill="#17191E" opacity=".09"/><rect x="22" y="214" width="86" height="44" rx="22" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.5"/><circle cx="48" cy="236" r="5" fill="#858891" opacity=".9"/><circle cx="65" cy="236" r="5" fill="#858891" opacity=".6"/><circle cx="82" cy="236" r="5" fill="#858891" opacity=".35"/><circle cx="246" cy="76" r="30" fill="#17191E"/><path d="M232 80v-5a14 14 0 0 1 28 0v5" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/><rect x="228" y="78" width="9" height="14" rx="4" fill="#FFFFFF"/><rect x="255" y="78" width="9" height="14" rx="4" fill="#FFFFFF"/><path d="M260 92c0 6-5 8-11 8" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round"/><circle cx="268" cy="54" r="8" fill="#30A46C" stroke="#FFFFFF" stroke-width="3"/><path d="M200 226V238M194 232H206" stroke="#E85002" stroke-width="3" stroke-linecap="round"/></svg></div>
+      </div>
+      <div class="qa">
+        <details data-reveal><summary>Para quais esportes o Aatlas Replay serve?</summary><p>Qualquer esporte que seja feito em quadra ou espaço privado. Por exemplo:</p><ul><li>Vôlei de praia</li><li>Futevôlei</li><li>Beach tennis</li><li>Futebol society</li><li>Padel</li><li>Futsal</li><li>Skate</li><li>Artes marciais</li><li>Hipismo</li><li>Entre outros</li></ul></details>
+        <details data-reveal><summary>Preciso comprar câmera cara?</summary><p>Não. O sistema usa câmera de segurança comum. Se você já tem uma apontada para a quadra, avaliamos na visita se ela serve.</p></details>
+        <details data-reveal><summary>Funciona em jogo à noite?</summary><p>Sim, com a quadra bem iluminada. Conferimos a luz de cada quadra antes de fechar qualquer coisa.</p></details>
+        <details data-reveal><summary>Que internet eu preciso?</summary><p>Uma internet de fibra comum já resolve. Cada vídeo é leve, com cerca de 7 MB.</p></details>
+        <details data-reveal><summary>O jogador precisa baixar aplicativo?</summary><p>Não. Ele abre o site da arena no celular, escolhe a quadra e o horário e baixa o vídeo.</p></details>
+        <details data-reveal><summary>E a privacidade de quem está jogando?</summary><p>Os vídeos ficam no ar por pouco tempo e são apagados sozinhos. A quadra recebe um aviso de que existe gravação.</p></details>
+        <details data-reveal><summary>O vídeo sai com a marca da Aatlas?</summary><p>Não. Cada vídeo leva só a marca da sua arena e dos seus patrocinadores.</p></details>
+        <details data-reveal><summary>E se a internet cair?</summary><p>O vídeo fica guardado no computador da arena e sobe sozinho quando a conexão voltar.</p></details>
+        <details data-reveal><summary>Precisa de computador na arena?</summary><p>Sim, um computador simples fica ligado na arena. No comodato ele já vem incluso.</p></details>
+        <details data-reveal><summary>Tem fidelidade?</summary><p>Sim: 12 meses na compra e 24 meses no comodato, tudo escrito na proposta.</p></details>
+        <details data-reveal><summary>Tem transmissão ao vivo ou jogo inteiro?</summary><p>Ainda não. O foco hoje é o lance: rápido, leve e com a sua marca. A tecnologia é atualizada sempre, e os recursos novos chegam por atualização.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="final">
+    <div class="wrap">
+      <div class="cta" data-reveal>
+        <div style="display:grid;gap:22px">
+          <span class="mono eyebrow">Próximo passo</span>
+          <h2>Coloque o replay na sua arena. <span class="it">Com a sua marca.</span></h2>
+          <p class="lead">Agende uma visita técnica, sem compromisso. A proposta vem por escrito, em compra ou comodato.</p>
+          <div class="row"><a class="btn btn-primary cta-link" href="https://wa.me/5541998145475" target="_blank" rel="noopener">Agendar visita técnica</a></div>
+          <div class="meta"><span class="chip"><span class="dot"></span>aatlascompany.com.br</span><span class="chip"><span class="dot"></span>@aatlascompany</span><span class="chip"><span class="dot"></span>Curitiba · PR</span></div>
+        </div>
+        <div class="art"><img src="assets/p-festa.webp" alt="Jogadores de vários esportes comemorando: beach tennis, vôlei, skate e artes marciais" width="1500" height="787" loading="lazy" decoding="async"><svg viewBox="0 0 540 300" role="img" aria-label="Replays da arena com a marca dela e a do patrocinador" xmlns="http://www.w3.org/2000/svg"><g transform="translate(112 160) rotate(-10)"><rect x="-71" y="-88" width="142" height="196" rx="22" fill="#17191E" opacity=".09"/><rect x="-76" y="-100" width="152" height="200" rx="22" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.5"/><rect x="-66" y="-90" width="132" height="112" rx="14" fill="#17191E"/><rect x="-48" y="-74" width="96" height="80" rx="3" fill="none" stroke="#FFFFFF" stroke-width="2" opacity=".4"/><path d="M-48 -53.2H48M-48 -14.8H48M0.0 -74V-53.2M0.0 -14.8V6" stroke="#FFFFFF" stroke-width="1.6" opacity=".5"/><circle cx="0" cy="-34" r="20" fill="#FFFFFF"/><path d="M-3.8 -39.5L6.2 -34L-3.8 -28.5Z" fill="#17191E" stroke="#17191E" stroke-width="2.2" stroke-linejoin="round"/><rect x="-66" y="36" width="78" height="9" rx="4.5" fill="#17191E"/><rect x="-66" y="53" width="52" height="7" rx="3.5" fill="#E2DDD5"/><rect x="-66" y="70" width="70" height="20" rx="10" fill="#FCEBDF"/><text x="-31" y="83.5" font-size="8" font-weight="700" fill="#E85002" text-anchor="middle">SUA ARENA</text></g><g transform="translate(430 160) rotate(10)"><rect x="-71" y="-88" width="142" height="196" rx="22" fill="#17191E" opacity=".09"/><rect x="-76" y="-100" width="152" height="200" rx="22" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.5"/><rect x="-66" y="-90" width="132" height="112" rx="14" fill="#F6B48A"/><rect x="-48" y="-74" width="96" height="80" rx="3" fill="none" stroke="#FFFFFF" stroke-width="2" opacity=".4"/><path d="M-48 -53.2H48M-48 -14.8H48M0.0 -74V-53.2M0.0 -14.8V6" stroke="#FFFFFF" stroke-width="1.6" opacity=".5"/><circle cx="0" cy="-34" r="20" fill="#FFFFFF"/><path d="M-3.8 -39.5L6.2 -34L-3.8 -28.5Z" fill="#E85002" stroke="#E85002" stroke-width="2.2" stroke-linejoin="round"/><rect x="-66" y="36" width="78" height="9" rx="4.5" fill="#17191E"/><rect x="-66" y="53" width="52" height="7" rx="3.5" fill="#E2DDD5"/><rect x="-66" y="70" width="70" height="20" rx="10" fill="#FCEBDF"/><text x="-31" y="83.5" font-size="8" font-weight="700" fill="#E85002" text-anchor="middle">PATROCÍNIO</text></g><g transform="translate(270 150) rotate(0)"><rect x="-71" y="-88" width="142" height="196" rx="22" fill="#17191E" opacity=".09"/><rect x="-76" y="-100" width="152" height="200" rx="22" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.5"/><rect x="-66" y="-90" width="132" height="112" rx="14" fill="#E85002"/><rect x="-48" y="-74" width="96" height="80" rx="3" fill="none" stroke="#FFFFFF" stroke-width="2" opacity=".4"/><path d="M-48 -53.2H48M-48 -14.8H48M0.0 -74V-53.2M0.0 -14.8V6" stroke="#FFFFFF" stroke-width="1.6" opacity=".5"/><circle cx="0" cy="-34" r="20" fill="#FFFFFF"/><path d="M-3.8 -39.5L6.2 -34L-3.8 -28.5Z" fill="#17191E" stroke="#17191E" stroke-width="2.2" stroke-linejoin="round"/><rect x="-66" y="36" width="78" height="9" rx="4.5" fill="#17191E"/><rect x="-66" y="53" width="52" height="7" rx="3.5" fill="#E2DDD5"/><rect x="-66" y="70" width="70" height="20" rx="10" fill="#FCEBDF"/><text x="-31" y="83.5" font-size="8" font-weight="700" fill="#E85002" text-anchor="middle">SUA MARCA</text></g><path d="M40 63V77M33 70H47" stroke="#E85002" stroke-width="3" stroke-linecap="round"/><path d="M500 54V66M494 60H506" stroke="#E85002" stroke-width="3" stroke-linecap="round"/><path d="M486 257V267M481 262H491" stroke="#E85002" stroke-width="3" stroke-linecap="round"/><path d="M54 243V253M49 248H59" stroke="#E85002" stroke-width="3" stroke-linecap="round"/><circle cx="92" cy="30" r="5" fill="#E85002"/><circle cx="456" cy="24" r="4" fill="#17191E"/><circle cx="210" cy="22" r="4" fill="#F6B48A"/><rect x="20" y="150" width="14" height="6" rx="3" fill="#17191E" transform="rotate(-30 27 153)"/><rect x="506" y="150" width="14" height="6" rx="3" fill="#E85002" transform="rotate(30 513 153)"/></svg></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="indique" style="padding-top:0">
+    <div class="wrap">
+      <div class="card band" data-reveal>
+        <div class="bhead">
+          <div><span class="mono eyebrow">Para quem joga</span>
+          <h2 class="h2">Joga numa arena que <span class="it">ainda não tem replay?</span></h2>
+          <p class="lead">Indique o nome da arena e a cidade. A gente conversa com o dono.</p>
+          <div class="art"><img src="assets/p-banco.webp" alt="Jogadora no banco, triste com o celular, enquanto as amigas jogam beach tennis" width="900" height="623" loading="lazy" decoding="async"><svg viewBox="0 0 360 260" role="img" aria-label="Mapa com a arena marcada e a mensagem de indicação" xmlns="http://www.w3.org/2000/svg"><rect x="46" y="44" width="230" height="170" rx="22" fill="#17191E" opacity=".09"/><rect x="40" y="32" width="230" height="172" rx="22" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.5"/><path d="M42 96H268M42 152H268M110 34V202M200 34V202" stroke="#F1EDE6" stroke-width="10"/><rect x="126" y="108" width="58" height="32" rx="6" fill="#FCEBDF"/><path d="M155 108V140" stroke="#E85002" stroke-width="2" opacity=".6"/><ellipse cx="155" cy="106" rx="14" ry="4" fill="#17191E" opacity=".14"/><path d="M155 104c-16-18-24-29-24-41a24 24 0 0 1 48 0c0 12-8 23-24 41z" fill="#E85002"/><circle cx="155" cy="62" r="9" fill="#FFFFFF"/><path d="M204 214v20l22-20z" fill="#17191E"/><rect x="183" y="169" width="160" height="58" rx="22" fill="#17191E" opacity=".09"/><rect x="180" y="160" width="160" height="58" rx="22" fill="#17191E"/><text x="200" y="185" font-size="12.5" font-weight="600" fill="#FFFFFF" text-anchor="start">Arena do bairro</text><text x="200" y="203" font-size="11" font-weight="500" fill="#FFFFFF" opacity=".75" text-anchor="start">ainda sem replay</text><rect x="17" y="25" width="104" height="34" rx="17" fill="#17191E" opacity=".09"/><rect x="14" y="18" width="104" height="34" rx="17" fill="#FFFFFF" stroke="#E2DDD5" stroke-width="1.5"/><circle cx="33" cy="35" r="8" fill="#E85002"/><text x="48" y="39.500" font-size="12" font-weight="600" fill="#17191E" text-anchor="start">Eu indico</text><path d="M312 53V67M305 60H319" stroke="#E85002" stroke-width="3" stroke-linecap="round"/><path d="M30 225V235M25 230H35" stroke="#E85002" stroke-width="3" stroke-linecap="round"/></svg></div></div>
+          <form class="form" id="indique-form">
+            <label><span>Seu nome</span><input name="nome" autocomplete="name" required maxlength="60"></label>
+            <label><span>Arena</span><input name="arena" required maxlength="80"></label>
+            <label><span>Cidade</span><input name="cidade" autocomplete="address-level2" required maxlength="60"></label>
+            <label><span>WhatsApp do dono <small>(opcional)</small></span><input name="dono" type="tel" inputmode="tel" autocomplete="off" maxlength="20"></label>
+            <button class="btn btn-primary" type="submit">Indicar pelo WhatsApp</button>
+            <p class="note">Abre o WhatsApp com a mensagem pronta. Você só confirma o envio.</p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<a class="fab cta-link" href="https://wa.me/5541998145475" target="_blank" rel="noopener" aria-label="Falar com a Aatlas no WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg></a>
+<div class="ana" id="ana"><button type="button" aria-label="Fechar o recado da Ana">×</button><a class="cta-link" href="https://wa.me/5541998145475" target="_blank" rel="noopener"><img src="assets/ana.webp" alt="" width="40" height="40"><span><b>Ana</b>Oi, como posso te ajudar?</span></a></div>
+
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div class="about">
+        <a href="https://www.aatlascompany.com.br" target="_blank" rel="noopener" aria-label="Site oficial da Aatlas Company"><img src="assets/logo.png" alt="Aatlas Company" height="40" loading="lazy"></a>
+        <p><b>Aatlas Replay</b> é uma iniciativa <a href="https://www.aatlascompany.com.br" target="_blank" rel="noopener"><b>Aatlas Company</b></a>. Replay automático com a marca da sua arena em cada lance.</p>
+      </div>
+      <nav aria-label="Produto"><h4>Produto</h4>
+        <ul><li><a href="#video">Vídeo</a></li><li><a href="#como-funciona">Como funciona</a></li><li><a href="#sua-marca">Sua marca</a></li><li><a href="#para-a-arena">Para a arena</a></li><li><a href="#planos">Planos</a></li></ul></nav>
+      <nav aria-label="Ajuda"><h4>Ajuda</h4>
+        <ul><li><a href="#duvidas">Dúvidas</a></li><li><a href="#implantacao">Implantação</a></li><li><a href="#privacidade">Privacidade</a></li><li><a href="#indique">Indique uma arena</a></li></ul></nav>
+      <nav aria-label="Contato"><h4>Contato</h4>
+        <ul><li><a href="mailto:contato@aatlascompany.com.br">contato@<wbr>aatlascompany.com.br</a></li></ul></nav>
+      <nav aria-label="Legal"><h4>Legal</h4>
+        <ul><li><a href="politica-de-privacidade.html">Política de Privacidade</a></li><li><a href="termos-de-uso.html">Termos de Uso</a></li></ul></nav>
+    </div>
+    <div class="legal"><span>© 2026 Aatlas Company · Infraestrutura de crescimento</span><span>Ilustrações e telas do vídeo meramente ilustrativas</span></div>
+  </div>
+</footer>
+
+<script>
+/* CONFIGURAÇÃO: WhatsApp comercial (só números, com DDI e DDD). Vazio = botões levam ao direct do @aatlascompany. */
+const WHATSAPP = "5541998145475";
+const MSG = "Oi! Vi o site do Aatlas Replay e quero saber como levar para a minha arena.";
+if (WHATSAPP) document.querySelectorAll(".cta-link").forEach(a => a.href = "https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(MSG));
+
+/* balão da Ana: aparece uma vez, quando a pessoa rola para baixo do vídeo, e some sozinho em 10 s; o X fecha na hora */
+(function(){
+  const ana = document.getElementById("ana"), sai = () => ana.classList.remove("on");
+  ana.querySelector("button").addEventListener("click", sai);
+  if (!("IntersectionObserver" in window)) return;
+  new IntersectionObserver((es, ob) => {
+    if (es[0].isIntersecting || es[0].boundingClientRect.bottom > 0) return;
+    ob.disconnect(); ana.classList.add("on"); setTimeout(sai, 10000);
+  }).observe(document.getElementById("vid"));
+})();
+
+/* indicação de arena: abre o WhatsApp comercial com a mensagem preenchida (sem WhatsApp configurado, vai para o direct) */
+document.getElementById("indique-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const d = new FormData(e.target), v = k => (d.get(k) || "").trim();
+  const txt = ["Oi! Quero indicar uma arena para o Aatlas Replay.", "Meu nome: " + v("nome"), "Arena: " + v("arena"), "Cidade: " + v("cidade"), v("dono") && "WhatsApp do dono: " + v("dono")].filter(Boolean).join("\n");
+  window.open(WHATSAPP ? "https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(txt) : "https://ig.me/m/aatlascompany", "_blank", "noopener");
+});
+
+/* vídeo: só começa no clique, já com som */
+const vid = document.getElementById("vid"), playBtn = document.getElementById("play");
+function startVideo(fromStart){
+  if (fromStart) vid.currentTime = 0;
+  vid.muted = false; vid.controls = true; playBtn.hidden = true;
+  vid.play().catch(() => { playBtn.hidden = false; vid.controls = false; });
+}
+playBtn.addEventListener("click", () => startVideo(false));
+/* tela cheia: no iPhone o vídeo só entra em tela cheia pelo webkitEnterFullscreen */
+document.getElementById("fs").addEventListener("click", () => {
+  if (vid.paused) startVideo(false);
+  if (vid.requestFullscreen) vid.requestFullscreen().catch(() => {}); else if (vid.webkitEnterFullscreen) vid.webkitEnterFullscreen();
+});
+vid.addEventListener("ended", () => { vid.controls = false; document.getElementById("play-title").textContent = "Assistir de novo"; playBtn.hidden = false; });
+document.getElementById("hero-watch").addEventListener("click", e => {
+  e.preventDefault();
+  document.getElementById("video").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center"});
+  startVideo(true);
+});
+
+/* cada seção tem seu endereço (/planos, /duvidas…): o vercel.json entrega o index.html nesses caminhos.
+   Abrindo o arquivo direto (file://) não há servidor, então os links seguem como #âncora. */
+if (location.protocol !== "file:") (function(){
+  const caminho = id => id === "topo" ? "/" : "/" + id;
+  const ir = (id, behavior) => { const el = document.getElementById(id); if (el) el.scrollIntoView({behavior}); };
+  document.querySelectorAll('a[href^="#"]:not(#hero-watch)').forEach(a => {
+    const id = a.hash.slice(1);
+    if (!document.getElementById(id)) return;
+    a.href = caminho(id);
+    a.addEventListener("click", e => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
+      e.preventDefault(); history.pushState(null, "", caminho(id)); ir(id);
+    });
+  });
+  const daUrl = behavior => ir(location.pathname.slice(1) || "topo", behavior);
+  addEventListener("popstate", () => daUrl());
+  if (location.pathname !== "/") { daUrl("instant"); addEventListener("load", () => daUrl("instant")); }
+  /* ao rolar, o endereço acompanha a seção que está no meio da tela */
+  const alvos = [...document.querySelectorAll("#video, main section[id]")];
+  let t;
+  addEventListener("scroll", () => {
+    clearTimeout(t);
+    t = setTimeout(() => {
+      const a = alvos.filter(s => s.getBoundingClientRect().top <= innerHeight / 2).pop(), p = a ? "/" + a.id : "/";
+      if (p !== location.pathname) history.replaceState(null, "", p);
+    }, 150);
+  }, {passive: true});
+})();
+
+/* carrossel de cenas: passa sozinho a cada 2 s, sempre para a frente, para enquanto a pessoa segura, e aceita arrastar com dedo ou mouse.
+   Para girar sem fim, há uma cópia da última cena antes da primeira e uma da primeira depois da última:
+   antes de cada avanço ou arrasto, se a cena parada for uma cópia, a posição pula (sem animação) para a verdadeira, e ninguém vê a emenda. */
+(function(){
+  const r = document.querySelector(".reel"); if (!r) return;
+  const n = r.children.length, copy = el => { const c = el.cloneNode(true); c.alt = ""; c.setAttribute("aria-hidden", "true"); c.loading = "eager"; return c; };
+  r.prepend(copy(r.children[n - 1])); r.append(copy(r.children[1]));
+  let hold = false, x0, s0;
+  const go = (i, behavior) => r.scrollTo({left: i * r.clientWidth, behavior});
+  const real = () => { let i = Math.round(r.scrollLeft / r.clientWidth); if (i < 1 || i > n) go(i = i < 1 ? n : 1, "instant"); return i; };
+  go(1, "instant");
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches)
+    setInterval(() => { if (!hold) go(real() + 1, "smooth"); }, 2000);
+  r.addEventListener("touchstart", () => { hold = true; real(); }, {passive: true});
+  ["touchend", "touchcancel"].forEach(e => r.addEventListener(e, () => hold = false));
+  r.addEventListener("pointerdown", e => {
+    if (e.pointerType !== "mouse") return;
+    real(); hold = true; x0 = e.clientX; s0 = r.scrollLeft; r.classList.add("drag"); r.setPointerCapture(e.pointerId);
+  });
+  r.addEventListener("pointermove", e => { if (r.classList.contains("drag")) r.scrollLeft = s0 - (e.clientX - x0); });
+  ["pointerup", "pointercancel"].forEach(e => r.addEventListener(e, () => {
+    if (!r.classList.contains("drag")) return;
+    r.classList.remove("drag"); hold = false; go(Math.round(r.scrollLeft / r.clientWidth), "smooth");
+  }));
+})();
+
+/* simulação de patrocínio */
+(function(){
+  const $ = id => document.getElementById(id), fmt = n => "R$ " + Math.round(n).toLocaleString("pt-BR");
+  function calc(){ const p=+$("p").value, v=+$("v").value; $("po").textContent=p; $("vo").textContent=fmt(v); $("rm").textContent=fmt(p*v); $("ra").textContent=fmt(p*v*12); }
+  ["p","v"].forEach(id => $(id).addEventListener("input", calc)); calc();
+})();
+
+/* animação ao rolar: tudo já está visível; o movimento só toca quando o bloco entra na tela */
+(function(){
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window) || !Element.prototype.animate) return;
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (!en.isIntersecting) return;
+      const el = en.target, blur = el.dataset.reveal === "blur", sib = [...el.parentElement.children].filter(c => c.hasAttribute("data-reveal")), i = Math.max(0, sib.indexOf(el));
+      el.animate(blur ? [{opacity:0, transform:"translateY(-20px)", filter:"blur(10px)"},{opacity:1, transform:"none", filter:"blur(0px)"}]
+                      : [{opacity:0, transform:"translateY(26px)"},{opacity:1, transform:"none"}],
+        {duration:blur ? 500 : 780, delay:Math.min(i,5)*(blur ? 200 : 80), easing:"cubic-bezier(.2,.75,.2,1)", fill:"backwards"});
+      io.unobserve(el);
+    });
+  }, {rootMargin:"0px 0px 12% 0px"});
+  document.querySelectorAll("[data-reveal]").forEach(el => io.observe(el));
+
+  /* título dos planos: cada palavra desce de trás de um corte, uma depois da outra */
+  document.querySelectorAll("[data-cut]").forEach(h => {
+    const tw = document.createTreeWalker(h, NodeFilter.SHOW_TEXT), nodes = [], words = [];
+    while (tw.nextNode()) nodes.push(tw.currentNode);
+    nodes.forEach(n => {
+      const f = document.createDocumentFragment();
+      n.data.split(/(\s+)/).forEach(t => {
+        if (!t.trim()) return f.append(t);
+        const o = document.createElement("span"), w = document.createElement("span");
+        o.className = "cw"; w.textContent = t; o.append(w); f.append(o); words.push(w);
+      });
+      n.replaceWith(f);
+    });
+    new IntersectionObserver((es, ob) => {
+      if (!es[0].isIntersecting) return;
+      ob.disconnect();
+      words.forEach((w, i) => w.animate([{transform:"translateY(-110%)"},{transform:"none"}], {duration:700, delay:i*120, easing:"cubic-bezier(.2,.9,.25,1)", fill:"backwards"}));
+    }).observe(h);
+  });
+})();
+</script>
+
+</body>
+</html>
