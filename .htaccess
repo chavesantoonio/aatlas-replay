@@ -1,0 +1,27 @@
+# Apache (Hostinger): mesmas regras do vercel.json. Funciona na raiz ou numa pasta (ex.: /replay).
+DirectoryIndex index.html
+Options -Indexes
+
+RewriteEngine On
+# /politica-de-privacidade -> politica-de-privacidade.html
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^([a-z-]+)$ $1.html [L]
+# /planos, /duvidas... -> index.html (o JS rola até a seção)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([a-z-]+)$ index.html [L]
+
+<IfModule mod_headers.c>
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  <FilesMatch "\.(mp4|jpg|png|webp)$">
+    ExpiresDefault "access plus 7 days"
+  </FilesMatch>
+</IfModule>

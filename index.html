@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F6F4F0">
 <title>Aatlas Replay — replay automático para arenas e quadras</title>
-<link rel="canonical" href="https://aatlas-replay-quadras.vercel.app/">
+<link rel="canonical" href="https://www.aatlascompany.com.br/replay/">
 <link rel="icon" type="image/png" href="favicon.png">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
-<meta property="og:url" content="https://aatlas-replay-quadras.vercel.app/">
+<meta property="og:url" content="https://www.aatlascompany.com.br/replay/">
 <meta property="og:title" content="Aatlas Replay — replay automático para arenas e quadras">
 <meta property="og:description" content="O jogador aperta o botão na quadra e em cerca de 10 segundos o lance está no site da arena, com a sua marca no vídeo.">
-<meta property="og:image" content="https://aatlas-replay-quadras.vercel.app/assets/poster.jpg">
+<meta property="og:image" content="https://www.aatlascompany.com.br/replay/assets/poster.jpg">
 <meta property="og:image:width" content="1920">
 <meta property="og:image:height" content="1080">
 <meta name="twitter:card" content="summary_large_image">
@@ -867,10 +867,11 @@ document.getElementById("hero-watch").addEventListener("click", e => {
   startVideo(true);
 });
 
-/* cada seção tem seu endereço (/planos, /duvidas…): o vercel.json entrega o index.html nesses caminhos.
-   Abrindo o arquivo direto (file://) não há servidor, então os links seguem como #âncora. */
+/* cada seção tem seu endereço (/planos, /duvidas…): o vercel.json e o .htaccess entregam o index.html nesses caminhos.
+   Funciona na raiz ou numa pasta (ex.: /replay/planos). Abrindo o arquivo direto (file://), os links seguem como #âncora. */
 if (location.protocol !== "file:") (function(){
-  const caminho = id => id === "topo" ? "/" : "/" + id;
+  const base = location.pathname.replace(/[^/]*$/, "");
+  const caminho = id => id === "topo" ? base : base + id;
   const ir = (id, behavior) => { const el = document.getElementById(id); if (el) el.scrollIntoView({behavior}); };
   document.querySelectorAll('a[href^="#"]:not(#hero-watch)').forEach(a => {
     const id = a.hash.slice(1);
@@ -881,16 +882,16 @@ if (location.protocol !== "file:") (function(){
       e.preventDefault(); history.pushState(null, "", caminho(id)); ir(id);
     });
   });
-  const daUrl = behavior => ir(location.pathname.slice(1) || "topo", behavior);
+  const daUrl = behavior => ir(location.pathname.slice(base.length) || "topo", behavior);
   addEventListener("popstate", () => daUrl());
-  if (location.pathname !== "/") { daUrl("instant"); addEventListener("load", () => daUrl("instant")); }
+  if (location.pathname !== base) { daUrl("instant"); addEventListener("load", () => daUrl("instant")); }
   /* ao rolar, o endereço acompanha a seção que está no meio da tela */
   const alvos = [...document.querySelectorAll("#video, main section[id]")];
   let t;
   addEventListener("scroll", () => {
     clearTimeout(t);
     t = setTimeout(() => {
-      const a = alvos.filter(s => s.getBoundingClientRect().top <= innerHeight / 2).pop(), p = a ? "/" + a.id : "/";
+      const a = alvos.filter(s => s.getBoundingClientRect().top <= innerHeight / 2).pop(), p = a ? base + a.id : base;
       if (p !== location.pathname) history.replaceState(null, "", p);
     }, 150);
   }, {passive: true});

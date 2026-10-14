@@ -11,11 +11,14 @@ Página única, sem dependências de build.
 - `chars.py` (opcional) — gera os personagens desenhados (`python3 chars.py chars.json`) caso queira ajustar poses ou criar novos.
 
 ## Publicação
-No ar em https://aatlas-replay-quadras.vercel.app (projeto Vercel `aatlas-replay-quadras`). Para atualizar, no PowerShell:
+Domínio oficial: https://www.aatlascompany.com.br/replay/ (Hostinger). Cópia de teste no Vercel: https://aatlas-replay-quadras.vercel.app. Para montar a `dist`, no PowerShell:
 
 ```
-Copy-Item *.html,paginas.css,vercel.json,favicon.png dist -Force; Copy-Item assets dist -Recurse -Force; npx vercel deploy dist --prod
+Copy-Item *.html,paginas.css,vercel.json,.htaccess,favicon.png dist -Force; Copy-Item assets dist -Recurse -Force
 ```
+
+- Hostinger: envie o conteúdo da `dist` (menos a pasta `.vercel`) para `public_html/replay/`. O `.htaccess` faz o papel do `vercel.json`.
+- Vercel: `npx vercel deploy dist --prod`.
 
 - WhatsApp: `const WHATSAPP` no fim do `index.html` e o `href` dos botões `.cta-link` (DDI+DDD+número).
 - `vercel.json`: cabeçalhos de segurança (CSP etc.) e cache dos `assets/` (7 dias — ao trocar um arquivo, mude o nome dele). Ao adicionar script/fonte/pixel de terceiros, libere o domínio na CSP.
