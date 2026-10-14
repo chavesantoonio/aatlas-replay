@@ -323,13 +323,27 @@ p{margin:0;text-wrap:pretty}
 .fab{display:grid;position:fixed;z-index:60;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border-radius:50%;place-items:center;background:#1DA851;color:#fff;box-shadow:0 14px 28px -10px rgba(23,25,30,.5)}
 .fab svg{width:30px;height:30px}
 /* balão da Ana acima do botão de WhatsApp (celular e desktop): aparece quando a pessoa passa do vídeo, some em 10 s ou no X; tocar nele abre a conversa */
-.ana{position:fixed;z-index:60;right:16px;bottom:calc(86px + env(safe-area-inset-bottom,0px));max-width:min(270px,calc(100vw - 48px));opacity:0;visibility:hidden;transform:translateY(8px) scale(.96);transform-origin:100% 100%;transition:opacity .25s ease,transform .25s ease,visibility .25s}
+.ana{position:fixed;z-index:60;right:16px;bottom:calc(86px + env(safe-area-inset-bottom,0px));opacity:0;visibility:hidden;transform:translateY(8px) scale(.96);transform-origin:100% 100%;transition:opacity .25s ease,transform .25s ease,visibility .25s}
 .ana.on{opacity:1;visibility:visible;transform:none}
-.ana a{display:flex;align-items:center;gap:10px;padding:10px 14px 10px 10px;border-radius:18px 18px 4px 18px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-lg);text-decoration:none;font-size:14.5px;line-height:1.3;color:var(--muted)}
+.ana a[hidden]{display:none}
+.ana a{max-width:min(270px,calc(100vw - 48px));display:flex;align-items:center;gap:10px;padding:10px 14px 10px 10px;border-radius:18px 18px 4px 18px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-lg);text-decoration:none;font-size:14.5px;line-height:1.3;color:var(--muted)}
 .ana img{width:40px;height:40px;border-radius:50%;border:2px solid var(--accent);flex:none}
 .ana b{display:block;color:var(--ink);font-weight:600;font-size:13.5px}
-.ana button{position:absolute;top:-10px;left:-10px;width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow);display:grid;place-items:center;padding:0;font-size:16px;line-height:1;color:var(--muted)}
-.ana button::after{content:"";position:absolute;inset:-9px}
+/* funil da Ana: abre no lugar do balão, 3 etapas (perfil, objetivo, nome e cidade) que montam a mensagem do WhatsApp */
+.funil{width:min(300px,calc(100vw - 32px));padding:14px;gap:12px;border-radius:18px 18px 4px 18px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-lg);font-size:14.5px;color:var(--muted)}
+.funil[hidden],.funil [hidden]{display:none!important}
+.funil .fh{display:flex;align-items:center;gap:10px;line-height:1.3}
+.funil .fh small{color:var(--faint);font-size:12.5px}
+.funil .fe{display:grid;gap:8px}
+.funil p{margin:0;color:var(--ink);font-weight:500}
+.funil .op{min-height:44px;padding:0 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface-2);font:inherit;font-weight:500;color:var(--ink);text-align:left;cursor:pointer}
+.funil .op:hover{border-color:var(--accent)}
+.funil label{font-size:14px}
+.funil input{min-height:44px;border-radius:12px}
+.funil .btn{min-height:46px;font-size:15px}
+.funil .voltar{justify-self:start;padding:6px 0;border:0;background:none;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer}
+.ana .x{position:absolute;z-index:1;top:-10px;left:-10px;width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow);display:grid;place-items:center;padding:0;font-size:16px;line-height:1;color:var(--muted)}
+.ana .x::after{content:"";position:absolute;inset:-9px}
 
 footer{border-top:1px solid var(--line);background:var(--surface);padding-block:clamp(40px,6vw,64px) 40px;color:var(--muted);font-size:14px}
 footer .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:32px 24px}
@@ -800,7 +814,18 @@ footer{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
 </main>
 
 <a class="fab cta-link" href="https://wa.me/5541998145475" target="_blank" rel="noopener" aria-label="Falar com a Aatlas no WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg></a>
-<div class="ana" id="ana"><button type="button" aria-label="Fechar o recado da Ana">×</button><a class="cta-link" href="https://wa.me/5541998145475" target="_blank" rel="noopener"><img src="assets/ana.webp" alt="" width="40" height="40"><span><b>Ana</b>Oi, como posso te ajudar?</span></a></div>
+<div class="ana" id="ana"><button class="x" type="button" aria-label="Fechar o recado da Ana">×</button><a class="cta-link" id="ana-balao" href="https://wa.me/5541998145475" target="_blank" rel="noopener"><img src="assets/ana.webp" alt="" width="40" height="40"><span><b>Ana</b>Oi, como posso te ajudar?</span></a>
+  <form class="form funil" id="funil" hidden aria-label="Como podemos te ajudar">
+    <div class="fh"><img src="assets/ana.webp" alt="" width="40" height="40"><span><b>Ana</b><small id="f-etapa" aria-live="polite">Etapa 1 de 3</small></span></div>
+    <div class="fe"><p>Como posso te ajudar? Você…</p>
+      <button class="op" type="button" data-p="dono">Tenho uma arena</button><button class="op" type="button" data-p="jogador">Jogo numa arena</button><button class="op" type="button" data-p="marca">Represento uma marca</button></div>
+    <div class="fe" hidden><p>O que você quer?</p><div class="fe" id="f-ops"></div></div>
+    <div class="fe" hidden><p>Para eu te chamar pelo nome:</p>
+      <label>Seu nome<input name="nome" autocomplete="name" required maxlength="60"></label>
+      <label>Cidade<input name="cidade" autocomplete="address-level2" required maxlength="60"></label>
+      <button class="btn btn-primary" type="submit">Abrir o WhatsApp</button></div>
+    <button class="voltar" type="button" hidden>← Voltar</button>
+  </form></div>
 
 <footer>
   <div class="wrap">
@@ -828,14 +853,46 @@ const WHATSAPP = "5541998145475";
 const MSG = "Oi! Vi o site do Aatlas Replay e quero saber como levar para a minha arena.";
 if (WHATSAPP) document.querySelectorAll(".cta-link").forEach(a => a.href = "https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(MSG));
 
-/* balão da Ana: aparece uma vez, quando a pessoa rola para baixo do vídeo, e some sozinho em 10 s; o X fecha na hora */
+/* balão da Ana: aparece quando a pessoa rola para baixo do vídeo e fica até ela fechar no X.
+   Clicar no balão abre o funil de 3 etapas no mesmo lugar; cada resposta entra na mensagem do WhatsApp. */
 (function(){
-  const ana = document.getElementById("ana"), sai = () => ana.classList.remove("on");
-  ana.querySelector("button").addEventListener("click", sai);
+  const ana = document.getElementById("ana"), funil = document.getElementById("funil"), balao = document.getElementById("ana-balao");
+  ana.querySelector(".x").addEventListener("click", () => ana.classList.remove("on"));
+  const OBJ = {
+    dono: ["conhecer o Aatlas Replay", "pedir uma proposta", "agendar uma visita técnica"],
+    jogador: ["indicar a arena onde eu jogo", "saber onde já tem replay", "tirar uma dúvida"],
+    marca: ["patrocinar uma arena", "saber como funciona o patrocínio", "tirar uma dúvida"]
+  };
+  const PERFIL = {dono: "Tenho uma arena", jogador: "Jogo numa arena", marca: "Represento uma marca"};
+  const etapas = funil.querySelectorAll(":scope > .fe"), voltar = funil.querySelector(".voltar"), ops = document.getElementById("f-ops");
+  let n = 0, perfil = "", obj = "";
+  const vai = i => {
+    n = i; etapas.forEach((s, k) => s.hidden = k !== i); voltar.hidden = i === 0;
+    document.getElementById("f-etapa").textContent = "Etapa " + (i + 1) + " de 3";
+    (etapas[i].querySelector("button, input") || funil).focus();
+  };
+  balao.addEventListener("click", e => { e.preventDefault(); balao.hidden = true; funil.hidden = false; vai(0); });
+  voltar.addEventListener("click", () => vai(n - 1));
+  etapas[0].querySelectorAll(".op").forEach(b => b.addEventListener("click", () => {
+    perfil = b.dataset.p;
+    ops.replaceChildren(...OBJ[perfil].map(t => {
+      const o = document.createElement("button"); o.type = "button"; o.className = "op";
+      o.textContent = t[0].toUpperCase() + t.slice(1);
+      o.addEventListener("click", () => { obj = t; vai(2); });
+      return o;
+    }));
+    vai(1);
+  }));
+  funil.addEventListener("submit", e => {
+    e.preventDefault();
+    const d = new FormData(funil), v = k => (d.get(k) || "").trim();
+    const txt = "Olá! Me chamo " + v("nome") + ", de " + v("cidade") + ". " + PERFIL[perfil] + " e quero " + obj + ".";
+    window.open(WHATSAPP ? "https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(txt) : "https://ig.me/m/aatlascompany", "_blank", "noopener");
+  });
   if (!("IntersectionObserver" in window)) return;
   new IntersectionObserver((es, ob) => {
     if (es[0].isIntersecting || es[0].boundingClientRect.bottom > 0) return;
-    ob.disconnect(); ana.classList.add("on"); setTimeout(sai, 10000);
+    ob.disconnect(); ana.classList.add("on");
   }).observe(document.getElementById("vid"));
 })();
 
